@@ -1,0 +1,909 @@
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ระบบบันทึกเวลาทำงาน (Cloud Sync)</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
+        .print-area { background-color: white; padding: 2rem; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); }
+        @media print { .no-print { display: none !important; } .print-area { box-shadow: none; padding: 0; margin: 0; } body { background: white; } }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        
+        /* สไตล์สำหรับ Overlay ตอนโหลดและล็อกอิน */
+        .overlay-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95); z-index: 50;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .pdf-table th, .pdf-table td { padding: 0.5rem 0.25rem; font-size: 0.85rem; text-align: center; }
+    </style>
+</head>
+<body class="p-2 sm:p-4 md:p-8 relative">
+
+    <!-- หน้าจอ Loading ดั้งเดิม -->
+    <div id="loadingOverlay" class="overlay-screen">
+        <div class="spinner mb-4"></div>
+        <p class="text-blue-600 font-bold">กำลังเชื่อมต่อระบบ...</p>
+    </div>
+
+    <!-- หน้าต่าง Login (ซ่อนไว้ก่อน จะโชว์ถ้ายังไม่เคยล็อกอิน) -->
+    <div id="loginOverlay" class="overlay-screen hidden" style="background: rgba(0,0,0,0.5);">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm mx-4 transform transition-all">
+            <div class="text-center mb-8">
+                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800">เข้าสู่ระบบ</h2>
+                <p class="text-sm text-gray-500 mt-1">กรุณายืนยันตัวตนก่อนใช้งาน</p>
+            </div>
+            
+            <form onsubmit="handleLoginSubmit(event)" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">รหัสพนักงาน (Username)</label>
+                    <input type="text" id="loginUsername" required class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" placeholder="เช่น A01234 หรือ admin">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">รหัสผ่าน (Password)</label>
+                    <input type="password" id="loginPassword" required class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" placeholder="••••••••">
+                </div>
+                <div id="loginError" class="text-red-500 text-sm text-center hidden bg-red-50 p-2 rounded">
+                    ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!
+                </div>
+                <button type="submit" id="btnLogin" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md mt-4">
+                    เข้าสู่ระบบ
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ส่วนเนื้อหาหลักของแอป (ซ่อนไว้ก่อนจนกว่าจะล็อกอิน) -->
+    <div id="appContent" class="max-w-4xl mx-auto hidden">
+        
+        <!-- แถบแสดงสถานะผู้ใช้ และปุ่ม Logout -->
+        <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-4 flex justify-between items-center shadow-sm no-print">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-200 p-2 rounded-full">
+                    <span id="headerAvatar" class="text-indigo-800 font-bold">👤</span>
+                </div>
+                <div>
+                    <p class="text-xs text-indigo-600">ลงชื่อเข้าใช้ในชื่อ:</p>
+                    <h3 id="headerUserName" class="font-bold text-indigo-900 text-sm sm:text-base">กำลังโหลด...</h3>
+                </div>
+            </div>
+            <button onclick="handleLogout()" class="text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-transparent hover:border-red-200">
+                ออกจากระบบ
+            </button>
+        </div>
+
+        <!-- เมนู Tabs -->
+        <div class="flex border-b border-gray-200 mb-4 overflow-x-auto no-print">
+            <button id="tabEntryBtn" onclick="switchTab('entry')" class="py-3 px-4 text-blue-600 border-b-2 border-blue-600 font-medium whitespace-nowrap">
+                1. ลงเวลา / จัดการ
+            </button>
+            <button id="tabReportBtn" onclick="switchTab('report')" class="py-3 px-4 text-gray-500 border-b-2 border-transparent font-medium whitespace-nowrap">
+                2. ดูรายงานการทำงาน
+            </button>
+            <button id="tabEmpBtn" onclick="switchTab('emp')" class="py-3 px-4 text-gray-500 border-b-2 border-transparent font-medium whitespace-nowrap hidden">
+                3. จัดการพนักงาน
+            </button>
+        </div>
+
+        <!-- TAB 1: บันทึกเวลา -->
+        <div id="entrySection" class="bg-white p-4 sm:p-6 rounded-xl shadow-md mb-6">
+            <!-- มุมมอง Admin (กรอกฟอร์มย้อนหลัง) -->
+            <div id="adminEntryView" class="hidden">
+                <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">แก้ไข/บันทึกเวลาทำงานย้อนหลัง (HR)</h2>
+                <form onsubmit="handleAdminSubmit(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">พนักงาน</label>
+                            <select id="inputEmp" required class="w-full border rounded-lg px-3 py-2 bg-gray-50 dynamic-emp-dropdown"></select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">วันที่</label>
+                            <input type="date" id="inputDate" required class="w-full border rounded-lg px-3 py-2">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">สถานะ</label>
+                            <select id="inputStatus" required class="w-full border rounded-lg px-3 py-2" onchange="toggleTimeInputs()">
+                                <option value="work">มาทำงาน</option>
+                                <option value="leave_sick">ลาป่วย</option>
+                                <option value="leave_personal">ลากิจ</option>
+                                <option value="leave_vacation">ลาพักร้อน</option>
+                                <option value="holiday">วันหยุด</option>
+                                <option value="absent">ขาดงาน</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">เวลาเข้า</label>
+                            <input type="time" id="inputTimeIn" class="w-full border rounded-lg px-3 py-2 time-input">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">เวลาออก</label>
+                            <input type="time" id="inputTimeOut" class="w-full border rounded-lg px-3 py-2 time-input">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">หมายเหตุ (ถ้ามี)</label>
+                        <input type="text" id="inputNote" class="w-full border rounded-lg px-3 py-2" placeholder="เช่น สาย 15 นาที, เปลี่ยนกะ">
+                    </div>
+                    <button type="submit" id="btnAdminSave" class="w-full bg-blue-600 text-white font-medium py-2 rounded-lg">บันทึกข้อมูลลงระบบ</button>
+                </form>
+            </div>
+
+            <!-- มุมมองพนักงาน (ปุ่มกดเข้าออก) -->
+            <div id="employeeEntryView" class="hidden py-4 text-center">
+                <h2 class="text-2xl font-bold text-gray-800 mb-1">ระบบลงเวลาปฏิบัติงาน</h2>
+                <p class="mb-6">สวัสดี, <span id="empGreetingName" class="font-bold text-blue-600 text-lg"></span></p>
+                
+                <div class="bg-gray-50 rounded-2xl p-6 mx-auto max-w-sm border mb-6">
+                    <p class="text-sm text-gray-500 mb-1">เวลาปัจจุบัน</p>
+                    <p id="liveClock" class="text-5xl font-bold text-gray-800 mb-2 font-mono tracking-wider">00:00</p>
+                    <p id="liveDate" class="text-sm text-gray-600 font-medium">--</p>
+                </div>
+
+                <div class="flex justify-center gap-4 max-w-sm mx-auto">
+                    <button onclick="handleEmployeeClock('in')" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl active:scale-95 shadow-md transition-transform text-lg">เข้างาน</button>
+                    <button onclick="handleEmployeeClock('out')" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-xl active:scale-95 shadow-md transition-transform text-lg">ออกงาน</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: รายงาน (อัปเดตสำหรับทำเงินเดือน) -->
+        <div id="reportSection" class="hidden">
+            <div class="bg-white p-4 rounded-xl shadow-md mb-4 flex flex-col md:flex-row gap-4 justify-between items-center no-print">
+                <h1 class="text-lg font-bold">สรุปเวลาทำงาน (เพื่อทำเงินเดือน)</h1>
+                <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                    <!-- Dropdown พนักงาน ซ่อนไว้ถ้าไม่ใช่ Admin -->
+                    <select id="employeeSelect" class="border rounded-lg px-3 py-2 w-full dynamic-emp-dropdown hidden" onchange="renderReport()"></select>
+                    
+                    <select id="cycleSelect" class="border rounded-lg px-3 py-2 w-full" onchange="renderReport()">
+                        <option value="2026-09">รอบ 16 ส.ค. 26 - 15 ก.ย. 26</option>
+                        <option value="2026-10" selected>รอบ 16 ก.ย. 26 - 15 ต.ค. 26</option>
+                        <option value="2026-11">รอบ 16 ต.ค. 26 - 15 พ.ย. 26</option>
+                    </select>
+                    <button onclick="generatePDF()" class="bg-indigo-700 text-white font-bold px-4 py-2 rounded-lg whitespace-nowrap shadow flex items-center justify-center gap-2">
+                        <span>📄</span> บันทึกเป็น PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- พื้นที่สำหรับ Print PDF -->
+            <div id="reportToPrint" class="print-area">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold">รายงานสรุปเวลาทำงาน (Time Attendance Report)</h2>
+                    <p class="text-base mt-2">รอบการทำงาน: <span id="displayCycle" class="font-bold underline">--</span></p>
+                </div>
+                <div class="flex justify-between mb-4 text-sm border-b-2 border-gray-800 pb-2">
+                    <div>
+                        <p><span class="font-semibold w-20 inline-block">รหัสพนักงาน:</span> <span id="displayEmpId" class="font-bold text-base"></span></p>
+                        <p><span class="font-semibold w-20 inline-block">ชื่อ-สกุล:</span> <span id="displayEmpName" class="font-bold text-base"></span></p>
+                        <p><span class="font-semibold w-20 inline-block">ตำแหน่ง:</span> <span id="displayEmpPosition" class="font-bold text-base"></span></p>
+                    </div>
+                    <div class="text-right">
+                        <p><span class="font-semibold">พิมพ์เมื่อวันที่:</span> <span id="printDate"></span></p>
+                    </div>
+                </div>
+
+                <table class="min-w-full border-collapse border border-gray-400 mb-6 text-sm pdf-table">
+                    <thead class="bg-gray-200 font-bold">
+                        <tr>
+                            <th class="border border-gray-400 w-24">วันที่</th>
+                            <th class="border border-gray-400">เข้า</th>
+                            <th class="border border-gray-400">ออก</th>
+                            <th class="border border-gray-400 bg-blue-100">ชม.ปกติ</th>
+                            <th class="border border-gray-400 bg-green-100">ชั่วโมง OT</th>
+                            <th class="border border-gray-400 bg-gray-300">รวม (ชม.)</th>
+                            <th class="border border-gray-400 w-20">สถานะ</th>
+                            <th class="border border-gray-400 w-32">หมายเหตุ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+                
+                <div class="bg-gray-100 border border-gray-400 rounded-lg p-4 mb-8 page-break-inside-avoid">
+                    <h3 class="font-bold text-center border-b border-gray-300 pb-2 mb-3">สรุปผลการปฏิบัติงานประจำรอบ (Payroll Summary)</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div class="bg-white p-2 border rounded shadow-sm">
+                            <p class="text-xs text-gray-500">รวมวันทำงาน</p>
+                            <p class="font-bold text-lg"><span id="sumDays">0</span> วัน</p>
+                        </div>
+                        <div class="bg-white p-2 border border-blue-200 rounded shadow-sm">
+                            <p class="text-xs text-blue-600">รวมชั่วโมงปกติ</p>
+                            <p class="font-bold text-lg text-blue-700"><span id="sumRegHrs">0</span> ชม.</p>
+                        </div>
+                        <div class="bg-white p-2 border border-green-200 rounded shadow-sm">
+                            <p class="text-xs text-green-600">รวมชั่วโมง OT</p>
+                            <p class="font-bold text-lg text-green-700"><span id="sumOTHrs">0</span> ชม.</p>
+                        </div>
+                        <div class="bg-white p-2 border border-red-200 rounded shadow-sm">
+                            <p class="text-xs text-red-500">วันลา / วันหยุด</p>
+                            <p class="font-bold text-lg text-red-600"><span id="sumLeaveDays">0</span> วัน</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between text-center mt-12 px-8 page-break-inside-avoid">
+                    <div>
+                        <p>.......................................................</p>
+                        <p class="text-sm mt-2">พนักงานผู้ปฏิบัติงาน</p>
+                    </div>
+                    <div>
+                        <p>.......................................................</p>
+                        <p class="text-sm mt-2">หัวหน้างานผู้อนุมัติ</p>
+                    </div>
+                    <div>
+                        <p>.......................................................</p>
+                        <p class="text-sm mt-2">ฝ่ายบุคคล / บัญชี</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: จัดการพนักงาน -->
+        <div id="empManageSection" class="hidden bg-white p-4 sm:p-6 rounded-xl shadow-md mb-6 no-print">
+            <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">เพิ่ม / แก้ไข ข้อมูลพนักงาน (Username & Password)</h2>
+            <form onsubmit="handleAddEmployee(event)" class="mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">รหัสพนักงาน (Username)</label>
+                        <input type="text" id="newEmpId" required class="w-full border rounded-lg px-3 py-2 bg-gray-50 focus:ring-2 focus:ring-blue-500" placeholder="เช่น A01234">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">ชื่อ-นามสกุล</label>
+                        <input type="text" id="newEmpName" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="เช่น สมชาย ใจดี">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">ตำแหน่ง</label>
+                        <input type="text" id="newEmpPosition" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="เช่น รปภ., หัวหน้า">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">รหัสผ่าน (Password)</label>
+                        <input type="text" id="newEmpPassword" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="เช่น 1234">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">สิทธิ์ใช้งาน (Role)</label>
+                        <select id="newEmpRole" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                            <option value="employee">พนักงานทั่วไป (Employee)</option>
+                            <option value="admin">ผู้ดูแลระบบ (Admin / HR)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">สถานะ (Status)</label>
+                        <select id="newEmpStatus" required class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                            <option value="active">🟢 ใช้งานปกติ (Active)</option>
+                            <option value="blocked">🔴 ระงับการใช้งาน (Block)</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" id="btnAddEmp" class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg whitespace-nowrap transition-colors shadow-sm">
+                    + บันทึกข้อมูลพนักงาน
+                </button>
+            </form>
+
+            <h3 class="font-bold text-gray-700 mb-2">รายชื่อพนักงานในระบบ</h3>
+            <div class="overflow-x-auto border rounded-lg shadow-sm">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="border-b px-4 py-3 text-left w-24">Username</th>
+                            <th class="border-b px-4 py-3 text-left">ชื่อ-นามสกุล</th>
+                            <th class="border-b px-4 py-3 text-left">ตำแหน่ง</th>
+                            <th class="border-b px-4 py-3 text-center">รหัสผ่าน</th>
+                            <th class="border-b px-4 py-3 text-center">สิทธิ์ / สถานะ</th>
+                            <th class="border-b px-4 py-3 text-center w-32">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="empListTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // 📌📌📌 นำรหัส Config ของคุณมาแปะทับในปีกกานี้ครับ 📌📌📌
+        const myNetlifyFirebaseConfig = {
+            apiKey: "AIzaSyCXuj7Pl1JnBn2Y7BtyzkHHQm4MQH-isrM",
+  authDomain: "time-attendance-69699.firebaseapp.com",
+  projectId: "time-attendance-69699",
+  storageBucket: "time-attendance-69699.firebasestorage.app",
+  messagingSenderId: "793986547170",
+  appId: "1:793986547170:web:337bfe602d9b3e32f34dbb"
+        };
+        // 📌📌📌📌📌📌📌📌📌📌📌📌📌📌📌📌📌📌📌📌
+
+        const appId = 'time-attendance-app';
+        let db, auth;
+        
+        window.allRecords = []; 
+        window.allEmployees = {}; 
+        window.allPositions = {};
+        window.allPasswords = {}; 
+        window.allRoles = {}; 
+        window.allStatuses = {};
+
+        async function initFirebase() {
+            try {
+                const finalConfig = (typeof __firebase_config !== 'undefined' && Object.keys(myNetlifyFirebaseConfig).length === 0) ? JSON.parse(__firebase_config) : myNetlifyFirebaseConfig;
+                
+                const app = initializeApp(finalConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                await signInAnonymously(auth);
+                startRealtimeSync();
+                
+                // พอต่อฐานข้อมูลสำเร็จ ให้ตรวจสอบสถานะล็อกอิน
+                checkLoginStatus();
+
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                document.getElementById('loadingOverlay').innerHTML = `<p class="text-red-500 p-4 bg-white rounded text-center">เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล<br>โปรดตรวจสอบ Config</p>`;
+            }
+        }
+
+        function startRealtimeSync() {
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), (snapshot) => {
+                window.allEmployees = {};
+                window.allPositions = {};
+                window.allPasswords = {};
+                window.allRoles = {};
+                window.allStatuses = {};
+                
+                snapshot.forEach(doc => { 
+                    const data = doc.data();
+                    window.allEmployees[doc.id] = data.name; 
+                    window.allPositions[doc.id] = data.position || '-';
+                    window.allPasswords[doc.id] = data.password || '123';
+                    window.allRoles[doc.id] = data.role || 'employee';
+                    window.allStatuses[doc.id] = data.status || 'active';
+                });
+                
+                // ข้อมูลตั้งต้นถ้าฐานข้อมูลว่างเปล่า (ลบออกได้ถ้าใช้จริง)
+                if(Object.keys(window.allEmployees).length === 0) {
+                    window.saveEmployee('A02927', 'อภิเสก วงค์ลังกา', 'เจ้าหน้าที่รักษาความปลอดภัย', '123', 'employee', 'active');
+                    window.saveEmployee('A02212', 'อนุกูลพันธ์ คุณา', 'หัวหน้าชุด', '123', 'admin', 'active');
+                }
+                
+                updateEmployeeDropdowns();
+                renderEmployeeTable();
+            });
+
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'attendances'), (snapshot) => {
+                window.allRecords = [];
+                snapshot.forEach(doc => { window.allRecords.push(doc.data()); });
+                if(document.getElementById('reportSection').classList.contains('hidden') === false) window.renderReport();
+            });
+        }
+
+        window.saveRecordToCloud = async function(recordData) {
+            try {
+                const docId = `${recordData.empId}_${recordData.date}`;
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendances', docId), recordData, { merge: true });
+                return true;
+            } catch (e) { console.error("บันทึกไม่สำเร็จ: " + e.message); return false; }
+        };
+
+        window.saveEmployee = async function(empId, name, position = '-', password = '123', role = 'employee', status = 'active') {
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', empId), { 
+                    name: name, 
+                    position: position,
+                    password: password,
+                    role: role,
+                    status: status
+                });
+                return true;
+            } catch (e) { console.error("จัดการพนักงานไม่สำเร็จ: " + e.message); return false; }
+        };
+
+        window.deleteEmployeeCloud = async function(empId) {
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', empId));
+                return true;
+            } catch (e) { console.error("ลบข้อมูลไม่สำเร็จ: " + e.message); return false; }
+        };
+
+        initFirebase();
+    </script>
+
+    <!-- UI & Login Logic Scripts -->
+    <script>
+        // --- ระบบล็อกอิน (ฝั่ง Client ที่อัปเดตให้เชื่อมกับฐานข้อมูลแล้ว) ---
+        let currentUserRole = null; 
+        const ADMIN_USERNAME = 'admin';
+        const ADMIN_PASSWORD = 'admin'; // รหัสผ่านสำรองสำหรับ Super Admin เผื่อฉุกเฉิน
+
+        function checkLoginStatus() {
+            const savedUser = localStorage.getItem('timeAttendanceUser');
+            document.getElementById('loadingOverlay').classList.add('hidden');
+
+            if (savedUser) {
+                proceedToApp(savedUser);
+            } else {
+                document.getElementById('loginOverlay').classList.remove('hidden');
+                document.getElementById('appContent').classList.add('hidden');
+            }
+        }
+
+        function handleLoginSubmit(event) {
+            event.preventDefault();
+            const usernameInput = document.getElementById('loginUsername').value.trim();
+            const passwordInput = document.getElementById('loginPassword').value;
+            const errorMsg = document.getElementById('loginError');
+            
+            // 1. เช็คกรณีเป็น Super Admin เผื่อฉุกเฉิน (กรณีฐานข้อมูลพัง หรือโดนลบหมด)
+            if (usernameInput.toLowerCase() === ADMIN_USERNAME && passwordInput === ADMIN_PASSWORD) {
+                errorMsg.classList.add('hidden');
+                localStorage.setItem('timeAttendanceUser', 'admin'); 
+                proceedToApp('admin');
+                return;
+            }
+
+            // 2. เช็คข้อมูลจากฐานข้อมูลพนักงาน (Firebase)
+            if (window.allEmployees[usernameInput]) {
+                // ดึงรหัสผ่านที่ HR ตั้งไว้มาตรวจสอบ (ถ้าไม่เคยตั้ง จะใช้ 123 เป็นค่าเริ่มต้น)
+                const correctPassword = window.allPasswords[usernameInput] || '123';
+                
+                if (passwordInput === correctPassword) {
+                    // ถ้ารหัสถูก ให้เช็คว่าโดนบล็อคหรือไม่
+                    const userStatus = window.allStatuses[usernameInput] || 'active';
+                    if (userStatus === 'blocked') {
+                        errorMsg.textContent = "บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อ HR";
+                        errorMsg.classList.remove('hidden');
+                        return;
+                    }
+
+                    // ผ่านทุกด่าน ล็อกอินสำเร็จ!
+                    errorMsg.classList.add('hidden');
+                    localStorage.setItem('timeAttendanceUser', usernameInput); 
+                    proceedToApp(usernameInput);
+                    return;
+                }
+            }
+
+            // ถ้ารหัสผิดหรือไม่เจอผู้ใช้ในระบบ
+            errorMsg.textContent = "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!";
+            errorMsg.classList.remove('hidden');
+        }
+
+        function handleLogout() {
+            if(confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
+                localStorage.removeItem('timeAttendanceUser'); 
+                clearInterval(clockInterval);
+                location.reload(); 
+            }
+        }
+
+        function proceedToApp(role) {
+            currentUserRole = role;
+            document.getElementById('loginOverlay').classList.add('hidden');
+            document.getElementById('appContent').classList.remove('hidden');
+            
+            setupRoleView();
+        }
+
+        // ----------------------------------------------------
+
+        let clockInterval;
+        const STATUS_LABELS = {
+            'work': 'ทำงาน', 'leave_sick': 'ลาป่วย', 'leave_personal': 'ลากิจ', 
+            'leave_vacation': 'พักร้อน', 'holiday': 'หยุดนักขัตฤกษ์', 'absent': 'ขาดงาน'
+        };
+
+        function updateEmployeeDropdowns() {
+            const empSelects = document.querySelectorAll('.dynamic-emp-dropdown');
+            
+            empSelects.forEach(sel => {
+                const oldVal = sel.value;
+                sel.innerHTML = '';
+                Object.keys(window.allEmployees).forEach(id => {
+                    const name = window.allEmployees[id];
+                    sel.innerHTML += `<option value="${id}">${id} - ${name}</option>`;
+                });
+                if(window.allEmployees[oldVal]) sel.value = oldVal;
+            });
+            
+            // เช็คสถานะแบบ Real-time: ถ้าพนักงานกำลังใช้งานอยู่ แล้วโดน HR ลบ หรือ บล็อค ให้เด้งออกทันที!
+            if (currentUserRole !== 'admin' && currentUserRole !== null) {
+                if (!window.allEmployees[currentUserRole]) {
+                    alert('บัญชีของคุณถูกลบออกจากระบบ กรุณาติดต่อ HR');
+                    handleLogout();
+                } else if (window.allStatuses[currentUserRole] === 'blocked') {
+                    alert('บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อ HR');
+                    handleLogout();
+                }
+            }
+        }
+
+        function setupRoleView() {
+            const adminEntry = document.getElementById('adminEntryView');
+            const empEntry = document.getElementById('employeeEntryView');
+            const tabEmp = document.getElementById('tabEmpBtn');
+            const empSelectDropdown = document.getElementById('employeeSelect');
+            
+            const headerName = document.getElementById('headerUserName');
+            const headerAvatar = document.getElementById('headerAvatar');
+
+            // ตรวจสอบสิทธิ์ว่าคนนี้เป็น Admin หรือไม่ (ดึงจากฐานข้อมูล)
+            let isUserAdmin = false;
+            if (currentUserRole === 'admin') isUserAdmin = true; // Super admin ฉุกเฉิน
+            else if (window.allRoles[currentUserRole] === 'admin') isUserAdmin = true; // พนักงานที่ได้สิทธิ์แอดมิน
+
+            if(isUserAdmin) {
+                // มุมมอง Admin (HR)
+                const empName = currentUserRole === 'admin' ? 'Super Admin' : window.allEmployees[currentUserRole];
+                headerName.textContent = `👑 ${empName} (HR)`;
+                headerAvatar.textContent = '👑';
+                
+                adminEntry.classList.remove('hidden'); 
+                empEntry.classList.add('hidden');
+                tabEmp.classList.remove('hidden');
+                
+                empSelectDropdown.classList.remove('hidden'); 
+                empSelectDropdown.disabled = false; 
+                
+                clearInterval(clockInterval);
+                switchTab('entry');
+            } else {
+                // มุมมองพนักงานทั่วไป
+                const empName = window.allEmployees[currentUserRole] || currentUserRole;
+                headerName.textContent = empName;
+                headerAvatar.textContent = '👤';
+                
+                adminEntry.classList.add('hidden'); 
+                empEntry.classList.remove('hidden');
+                tabEmp.classList.add('hidden'); 
+                
+                empSelectDropdown.classList.add('hidden'); 
+                empSelectDropdown.innerHTML = `<option value="${currentUserRole}">${currentUserRole}</option>`;
+                empSelectDropdown.value = currentUserRole;
+                
+                document.getElementById('empGreetingName').textContent = empName;
+                startClock();
+                switchTab('entry');
+            }
+        }
+
+        function renderEmployeeTable() {
+            const tbody = document.getElementById('empListTable');
+            tbody.innerHTML = '';
+            Object.keys(window.allEmployees).forEach(id => {
+                const name = window.allEmployees[id];
+                const pos = window.allPositions[id] || '-';
+                const pass = window.allPasswords[id] || '123';
+                const role = window.allRoles[id] === 'admin' ? '<span class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs">Admin</span>' : '<span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">พนักงาน</span>';
+                const status = window.allStatuses[id] === 'blocked' ? '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">ระงับ</span>' : '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">ปกติ</span>';
+
+                tbody.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="px-4 py-3 font-mono text-blue-700">${id}</td>
+                        <td class="px-4 py-3 font-medium">${name}</td>
+                        <td class="px-4 py-3 text-gray-600 text-xs">${pos}</td>
+                        <td class="px-4 py-3 text-center text-gray-500 font-mono text-xs">${pass}</td>
+                        <td class="px-4 py-3 text-center space-y-1 sm:space-y-0">${role} ${status}</td>
+                        <td class="px-4 py-3 text-center whitespace-nowrap">
+                            <button onclick="editEmployee('${id}')" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1 rounded text-sm mr-1 transition-colors">แก้ไข</button>
+                            <button onclick="deleteEmployeeUi('${id}', this)" class="text-red-600 hover:text-red-800 bg-red-50 px-3 py-1 rounded text-sm transition-colors">ลบ</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function editEmployee(id) {
+            document.getElementById('newEmpId').value = id;
+            document.getElementById('newEmpId').readOnly = true; 
+            document.getElementById('newEmpId').classList.add('bg-gray-200', 'text-gray-500');
+            
+            document.getElementById('newEmpName').value = window.allEmployees[id];
+            document.getElementById('newEmpPosition').value = window.allPositions[id] !== '-' ? window.allPositions[id] : '';
+            document.getElementById('newEmpPassword').value = window.allPasswords[id] || '123';
+            document.getElementById('newEmpRole').value = window.allRoles[id] || 'employee';
+            document.getElementById('newEmpStatus').value = window.allStatuses[id] || 'active';
+            
+            const btn = document.getElementById('btnAddEmp');
+            btn.textContent = "💾 บันทึกการแก้ไข";
+            btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+        }
+
+        let deleteConfirmId = null;
+        async function deleteEmployeeUi(id, btnElement) {
+            if(deleteConfirmId !== id) {
+                deleteConfirmId = id;
+                const originalText = btnElement.textContent;
+                btnElement.textContent = "ยืนยันลบ?";
+                btnElement.classList.replace('bg-red-50', 'bg-red-500');
+                btnElement.classList.replace('text-red-600', 'text-white');
+                
+                setTimeout(() => {
+                    if(deleteConfirmId === id) {
+                        deleteConfirmId = null;
+                        btnElement.textContent = originalText;
+                        btnElement.classList.replace('bg-red-500', 'bg-red-50');
+                        btnElement.classList.replace('text-white', 'text-red-600');
+                    }
+                }, 3000);
+                return;
+            }
+            
+            deleteConfirmId = null;
+            btnElement.textContent = "กำลังลบ...";
+            await window.deleteEmployeeCloud(id);
+        }
+
+        async function handleAddEmployee(e) {
+            e.preventDefault();
+            const id = document.getElementById('newEmpId').value.trim();
+            const name = document.getElementById('newEmpName').value.trim();
+            const pos = document.getElementById('newEmpPosition').value.trim();
+            const pass = document.getElementById('newEmpPassword').value.trim();
+            const role = document.getElementById('newEmpRole').value;
+            const status = document.getElementById('newEmpStatus').value;
+            
+            const btn = document.getElementById('btnAddEmp');
+            
+            if(!id || !name || !pass) return;
+            btn.innerHTML = "กำลังบันทึก..."; btn.disabled = true;
+            
+            const success = await window.saveEmployee(id, name, pos, pass, role, status);
+            if(success) {
+                document.getElementById('newEmpId').value = '';
+                document.getElementById('newEmpId').readOnly = false;
+                document.getElementById('newEmpId').classList.remove('bg-gray-200', 'text-gray-500');
+                document.getElementById('newEmpName').value = '';
+                document.getElementById('newEmpPosition').value = '';
+                document.getElementById('newEmpPassword').value = '';
+                document.getElementById('newEmpRole').value = 'employee';
+                document.getElementById('newEmpStatus').value = 'active';
+                
+                btn.textContent = "+ บันทึกข้อมูลพนักงาน"; 
+                btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                btn.classList.add('bg-green-600', 'hover:bg-green-700');
+            }
+            btn.disabled = false;
+        }
+
+        function switchTab(tabId) {
+            document.getElementById('entrySection').classList.add('hidden');
+            document.getElementById('reportSection').classList.add('hidden');
+            document.getElementById('empManageSection').classList.add('hidden');
+            
+            const tabs = ['tabEntryBtn', 'tabReportBtn', 'tabEmpBtn'];
+            tabs.forEach(t => document.getElementById(t).className = "py-3 px-4 text-gray-500 border-b-2 border-transparent font-medium whitespace-nowrap");
+            
+            if (tabId === 'entry') {
+                document.getElementById('entrySection').classList.remove('hidden');
+                document.getElementById('tabEntryBtn').className = "py-3 px-4 text-blue-600 border-b-2 border-blue-600 font-medium whitespace-nowrap";
+            } else if (tabId === 'report') {
+                document.getElementById('reportSection').classList.remove('hidden');
+                document.getElementById('tabReportBtn').className = "py-3 px-4 text-blue-600 border-b-2 border-blue-600 font-medium whitespace-nowrap";
+                renderReport();
+            } else if (tabId === 'emp') {
+                document.getElementById('empManageSection').classList.remove('hidden');
+                document.getElementById('tabEmpBtn').className = "py-3 px-4 text-blue-600 border-b-2 border-blue-600 font-medium whitespace-nowrap";
+            }
+        }
+
+        function toggleTimeInputs() {
+            const isWork = document.getElementById('inputStatus').value === 'work';
+            document.querySelectorAll('.time-input').forEach(input => {
+                input.disabled = !isWork;
+                input.value = !isWork ? '' : input.value;
+            });
+        }
+
+        function startClock() {
+            clearInterval(clockInterval);
+            const update = () => {
+                const now = new Date();
+                document.getElementById('liveClock').textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+                document.getElementById('liveDate').textContent = now.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            };
+            update();
+            clockInterval = setInterval(update, 1000);
+        }
+
+        async function handleEmployeeClock(type) {
+            const now = new Date();
+            const dateISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+            
+            let existingRecord = window.allRecords.find(r => r.empId === currentUserRole && r.date === dateISO) || {};
+
+            let recordToSave = {
+                empId: currentUserRole,
+                name: window.allEmployees[currentUserRole],
+                date: dateISO,
+                status: 'work',
+                note: existingRecord.note || 'แสกนผ่านแอป'
+            };
+
+            if (type === 'in') {
+                recordToSave.in = timeStr;
+                if(existingRecord.out) recordToSave.out = existingRecord.out; 
+            } else {
+                recordToSave.out = timeStr;
+                if(existingRecord.in) recordToSave.in = existingRecord.in;
+            }
+
+            const success = await window.saveRecordToCloud(recordToSave);
+            if(success) alert(`บันทึกเวลา${type === 'in' ? 'เข้า' : 'ออก'}งานสำเร็จ (${timeStr} น.)`);
+        }
+
+        async function handleAdminSubmit(event) {
+            event.preventDefault();
+            const empId = document.getElementById('inputEmp').value;
+            const status = document.getElementById('inputStatus').value;
+            const btn = document.getElementById('btnAdminSave');
+
+            const recordToSave = {
+                empId: empId,
+                name: window.allEmployees[empId],
+                date: document.getElementById('inputDate').value,
+                in: status === 'work' ? document.getElementById('inputTimeIn').value : '-',
+                out: status === 'work' ? document.getElementById('inputTimeOut').value : '-',
+                status: status,
+                note: document.getElementById('inputNote').value
+            };
+
+            btn.textContent = "กำลังบันทึก..."; btn.disabled = true;
+            const success = await window.saveRecordToCloud(recordToSave);
+            btn.textContent = "บันทึกข้อมูลลงระบบ"; btn.disabled = false;
+
+            if(success) {
+                alert("บันทึกข้อมูลเรียบร้อยแล้ว");
+                document.getElementById('inputDate').value = '';
+                document.getElementById('inputTimeIn').value = '';
+                document.getElementById('inputTimeOut').value = '';
+                document.getElementById('inputNote').value = '';
+                document.getElementById('inputStatus').value = 'work';
+                toggleTimeInputs();
+            }
+        }
+
+        function calculateHours(timeIn, timeOut) {
+            if (!timeIn || !timeOut || timeIn === '-' || timeOut === '-') return { reg: 0, ot: 0, total: 0 };
+            
+            let [inH, inM] = timeIn.split(':').map(Number);
+            let [outH, outM] = timeOut.split(':').map(Number);
+            
+            let dIn = new Date(2000, 0, 1, inH, inM);
+            let dOut = new Date(2000, 0, (outH < inH ? 2 : 1), outH, outM);
+            
+            let diffHrs = (dOut - dIn) / (1000 * 60 * 60);
+            
+            if(diffHrs < 0) return { reg: 0, ot: 0, total: 0 };
+
+            let reg = Math.min(diffHrs, 8); 
+            let ot = Math.max(0, diffHrs - 8); 
+            
+            return { reg: reg, ot: ot, total: diffHrs };
+        }
+
+        function getThaiDay(dateStr) {
+            const days = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+            const d = new Date(dateStr);
+            return days[d.getDay()];
+        }
+
+        window.renderReport = function() {
+            if (!window.allRecords || Object.keys(window.allEmployees).length === 0) return;
+
+            const empId = currentUserRole === 'admin' ? document.getElementById('employeeSelect').value : currentUserRole;
+            if(!empId) return;
+
+            const cycleVal = document.getElementById('cycleSelect').value; 
+            const [year, month] = cycleVal.split('-');
+            const startDate = `${year}-${String(parseInt(month)-1).padStart(2,'0')}-16`; 
+            const endDate = `${year}-${month}-15`; 
+
+            const sel = document.getElementById('cycleSelect');
+            document.getElementById('displayCycle').textContent = sel.options[sel.selectedIndex].text.replace('รอบ ', '');
+            document.getElementById('displayEmpId').textContent = empId;
+            document.getElementById('displayEmpName').textContent = window.allEmployees[empId];
+            document.getElementById('displayEmpPosition').textContent = window.allPositions[empId] || '-';
+            document.getElementById('printDate').textContent = new Date().toLocaleDateString('th-TH');
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            let currentD = new Date(startDate);
+            let endD = new Date(endDate);
+            let dateArray = [];
+            while(currentD <= endD) {
+                dateArray.push(currentD.toISOString().split('T')[0]);
+                currentD.setDate(currentD.getDate() + 1);
+            }
+
+            let sumDays = 0, sumReg = 0, sumOT = 0, sumLeave = 0;
+
+            dateArray.forEach(dStr => {
+                let record = window.allRecords.find(r => r.empId === empId && r.date === dStr);
+                
+                let dayThai = getThaiDay(dStr);
+                let dateDisplay = `${dStr.split('-')[2]}/${dStr.split('-')[1]} (${dayThai})`;
+
+                if (!record) {
+                    tbody.innerHTML += `
+                        <tr class="border-b text-gray-400">
+                            <td class="border border-gray-400">${dateDisplay}</td>
+                            <td class="border border-gray-400">-</td><td class="border border-gray-400">-</td>
+                            <td class="border border-gray-400">-</td><td class="border border-gray-400">-</td><td class="border border-gray-400">-</td>
+                            <td class="border border-gray-400">-</td><td class="border border-gray-400"></td>
+                        </tr>
+                    `;
+                } else {
+                    let stText = STATUS_LABELS[record.status] || record.status;
+                    let bgRow = record.status !== 'work' ? 'bg-orange-50 text-orange-800' : '';
+                    
+                    let hrs = calculateHours(record.in, record.out);
+                    
+                    if(record.status === 'work') {
+                        if(hrs.total > 0) sumDays++;
+                        sumReg += hrs.reg;
+                        sumOT += hrs.ot;
+                    } else if (record.status !== 'absent') {
+                        sumLeave++;
+                    }
+
+                    tbody.innerHTML += `
+                        <tr class="border-b ${bgRow}">
+                            <td class="border border-gray-400">${dateDisplay}</td>
+                            <td class="border border-gray-400 font-medium ${record.in !== '-' ? 'text-blue-700' : ''}">${record.in || '-'}</td>
+                            <td class="border border-gray-400 font-medium ${record.out !== '-' ? 'text-blue-700' : ''}">${record.out || '-'}</td>
+                            
+                            <td class="border border-gray-400 bg-blue-50">${hrs.reg > 0 ? hrs.reg.toFixed(1) : '-'}</td>
+                            <td class="border border-gray-400 bg-green-50 text-green-700 font-bold">${hrs.ot > 0 ? hrs.ot.toFixed(1) : '-'}</td>
+                            <td class="border border-gray-400 bg-gray-100 font-bold">${hrs.total > 0 ? hrs.total.toFixed(1) : '-'}</td>
+                            
+                            <td class="border border-gray-400">${stText}</td>
+                            <td class="border border-gray-400 text-left px-2 truncate max-w-[120px] text-xs">${record.note || ''}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            document.getElementById('sumDays').textContent = sumDays;
+            document.getElementById('sumRegHrs').textContent = sumReg.toFixed(1);
+            document.getElementById('sumOTHrs').textContent = sumOT.toFixed(1);
+            document.getElementById('sumLeaveDays').textContent = sumLeave;
+        };
+
+        function generatePDF() {
+            const element = document.getElementById('reportToPrint');
+            const empId = currentUserRole === 'admin' ? document.getElementById('employeeSelect').value : currentUserRole;
+            const empName = window.allEmployees[empId] || 'Report';
+            
+            html2pdf().set({
+                margin: [10, 10, 10, 10], 
+                filename: `Payroll_${empName}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(element).save();
+        }
+    </script>
+</body>
+</html>
