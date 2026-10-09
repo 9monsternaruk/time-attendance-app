@@ -95,42 +95,45 @@
             <div id="adminEntryView" class="hidden">
                 <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">แก้ไข/บันทึกเวลาทำงานย้อนหลัง (HR)</h2>
                 <form onsubmit="handleAdminSubmit(event)" class="space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                        <div class="w-full overflow-hidden">
                             <label class="block text-sm font-medium mb-1">พนักงาน</label>
-                            <select id="inputEmp" required class="w-full border rounded-lg px-3 py-2 bg-gray-50 dynamic-emp-dropdown"></select>
+                            <select id="inputEmp" required class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 dynamic-emp-dropdown"></select>
                         </div>
-                        <div>
+                        <div class="w-full overflow-hidden pr-1">
                             <label class="block text-sm font-medium mb-1">วันที่</label>
-                            <input type="date" id="inputDate" required class="w-full border rounded-lg px-3 py-2">
+                            <input type="date" id="inputDate" required class="w-full border border-gray-300 rounded-lg px-3 py-2">
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                        <div class="w-full overflow-hidden">
                             <label class="block text-sm font-medium mb-1">สถานะ</label>
-                            <select id="inputStatus" required class="w-full border rounded-lg px-3 py-2" onchange="toggleTimeInputs()">
+                            <select id="inputStatus" required class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white" onchange="toggleTimeInputs()">
                                 <option value="work">มาทำงาน</option>
                                 <option value="leave_sick">ลาป่วย</option>
                                 <option value="leave_personal">ลากิจ</option>
                                 <option value="leave_vacation">ลาพักร้อน</option>
                                 <option value="holiday">วันหยุด</option>
                                 <option value="absent">ขาดงาน</option>
+                                <option value="reset">รีเซ็ต (ล้างข้อมูล)</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">เวลาเข้า</label>
-                            <input type="time" id="inputTimeIn" class="w-full border rounded-lg px-3 py-2 time-input">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">เวลาออก</label>
-                            <input type="time" id="inputTimeOut" class="w-full border rounded-lg px-3 py-2 time-input">
+                        <div class="col-span-1 sm:col-span-2 grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border border-gray-200 w-full overflow-hidden pr-1">
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-green-700 font-bold">เวลาเข้า</label>
+                                <input type="time" id="inputTimeIn" class="w-full border border-gray-300 rounded-lg px-3 py-2 time-input bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1 text-red-700 font-bold">เวลาออก</label>
+                                <input type="time" id="inputTimeOut" class="w-full border border-gray-300 rounded-lg px-3 py-2 time-input bg-white">
+                            </div>
                         </div>
                     </div>
-                    <div>
+                    <div class="w-full overflow-hidden pr-1">
                         <label class="block text-sm font-medium mb-1">หมายเหตุ (ถ้ามี)</label>
-                        <input type="text" id="inputNote" class="w-full border rounded-lg px-3 py-2" placeholder="เช่น สาย 15 นาที, เปลี่ยนกะ">
+                        <input type="text" id="inputNote" class="w-full border border-gray-300 rounded-lg px-3 py-2" placeholder="เช่น สาย 15 นาที, เปลี่ยนกะ">
                     </div>
-                    <button type="submit" id="btnAdminSave" class="w-full bg-blue-600 text-white font-medium py-2 rounded-lg">บันทึกข้อมูลลงระบบ</button>
+                    <button type="submit" id="btnAdminSave" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg mt-2 transition-colors">บันทึกข้อมูลลงระบบ</button>
                 </form>
             </div>
 
@@ -465,7 +468,7 @@
         let clockInterval;
         const STATUS_LABELS = {
             'work': 'ทำงาน', 'leave_sick': 'ลาป่วย', 'leave_personal': 'ลากิจ', 
-            'leave_vacation': 'พักร้อน', 'holiday': 'วันหยุด', 'absent': 'ขาดงาน'
+            'leave_vacation': 'พักร้อน', 'holiday': 'วันหยุด', 'absent': 'ขาดงาน', 'reset': 'รีเซ็ต'
         };
 
         function updateEmployeeDropdowns() {
