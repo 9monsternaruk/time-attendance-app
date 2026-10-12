@@ -27,6 +27,10 @@
         
         .pdf-table th, .pdf-table td { padding: 0.5rem 0.25rem; font-size: 0.85rem; text-align: center; }
         
+        /* แก้ไขเพิ่ม: ป้องกันตารางขาดครึ่งตอนเซฟ PDF แบบบังคับเด็ดขาด */
+        .pdf-table { border-collapse: collapse; }
+        .pdf-table tr { page-break-inside: avoid !important; break-inside: avoid-page !important; }
+        
         .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 1rem); }
     </style>
 </head>
@@ -102,17 +106,14 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <div class="w-full overflow-hidden">
                             <label class="block text-sm font-medium mb-1">พนักงาน</label>
-                            <!-- เพิ่ม onchange เพื่อโหลดข้อมูลเมื่อเปลี่ยนคน -->
                             <select id="inputEmp" required class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-50 dynamic-emp-dropdown" onchange="loadRecordForAdmin()"></select>
                         </div>
                         <div class="w-full overflow-hidden pr-1">
                             <label class="block text-sm font-medium mb-1">วันที่</label>
-                            <!-- เพิ่ม onchange เพื่อโหลดข้อมูลเมื่อเปลี่ยนวัน -->
                             <input type="date" id="inputDate" required class="w-full border border-gray-300 rounded-lg px-3 py-2" onchange="loadRecordForAdmin()">
                         </div>
                     </div>
                     
-                    <!-- แก้ไข 1: แยกช่องเวลาเข้า/ออก ไม่ให้อยู่ในกรอบเดียวกัน -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                         <div class="w-full overflow-hidden">
                             <label class="block text-sm font-medium mb-1">สถานะ</label>
@@ -144,27 +145,37 @@
                 </form>
             </div>
 
-            <div id="employeeEntryView" class="hidden py-4 text-center">
-                <h2 class="text-2xl font-bold text-gray-800 mb-1">ระบบลงเวลาปฏิบัติงาน</h2>
-                <p class="mb-6">สวัสดี, <span id="empGreetingName" class="font-bold text-blue-600 text-lg"></span></p>
+            <!-- เริ่มแก้ไข: ดีไซน์ใหม่สไตล์ Minimal / Modern -->
+            <div id="employeeEntryView" class="hidden py-8 px-4 text-center max-w-sm mx-auto">
                 
-                <div class="bg-gray-50 rounded-2xl p-6 mx-auto max-w-sm border mb-6 shadow-inner">
-                    <p class="text-sm text-gray-500 mb-1">เวลาปัจจุบัน</p>
-                    <p id="liveClock" class="text-5xl font-bold text-gray-800 mb-2 font-mono tracking-wider">00:00</p>
-                    <p id="liveDate" class="text-sm text-gray-600 font-medium">--</p>
+                <!-- Greeting -->
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold text-gray-900 tracking-tight">
+                        สวัสดี, <span id="empGreetingName" class="text-blue-600"></span>
+                    </h2>
+                    <p class="text-gray-500 mt-2 text-sm">Are You Ready?</p>
+                </div>
+                
+                <!-- Minimal Clock -->
+                <div class="mb-10">
+                    <p id="liveClock" class="text-6xl sm:text-7xl font-light text-gray-800 tracking-tighter tabular-nums mb-2">00:00</p>
+                    <p id="liveDate" class="text-gray-500 text-sm font-medium">--</p>
                 </div>
 
-                <div class="flex justify-center gap-4 max-w-sm mx-auto">
-                    <button onclick="handleEmployeeClock('in')" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl active:scale-95 shadow-md transition-transform text-lg flex flex-col items-center gap-1">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
-                        เข้างาน
+                <!-- Clean Action Buttons -->
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="handleEmployeeClock('in')" class="group flex flex-col items-center justify-center gap-2 bg-white border-2 border-gray-100 hover:border-emerald-500 hover:bg-emerald-50 text-gray-700 py-6 rounded-2xl transition-all duration-200 active:scale-95 shadow-sm">
+                        <svg class="w-8 h-8 text-emerald-500 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                        <span class="font-semibold text-sm">เข้างาน</span>
                     </button>
-                    <button onclick="handleEmployeeClock('out')" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-xl active:scale-95 shadow-md transition-transform text-lg flex flex-col items-center gap-1">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                        ออกงาน
+
+                    <button onclick="handleEmployeeClock('out')" class="group flex flex-col items-center justify-center gap-2 bg-white border-2 border-gray-100 hover:border-rose-500 hover:bg-rose-50 text-gray-700 py-6 rounded-2xl transition-all duration-200 active:scale-95 shadow-sm">
+                        <svg class="w-8 h-8 text-rose-500 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        <span class="font-semibold text-sm">ออกงาน</span>
                     </button>
                 </div>
             </div>
+            <!-- สิ้นสุดการแก้ไข: ดีไซน์ใหม่สไตล์ Minimal / Modern -->
         </div>
 
         <div id="reportSection" class="hidden">
@@ -773,29 +784,24 @@
             const isWork = document.getElementById('inputStatus').value === 'work';
             document.querySelectorAll('.time-input').forEach(input => {
                 input.disabled = !isWork;
-                // ไม่เคลียร์ค่าอัตโนมัติ เพื่อให้ดึงข้อมูลเดิมมาโชว์ได้
                 if(!isWork) input.value = '';
             });
         }
 
-        // --- แก้ไข 2: เพิ่มฟังก์ชันให้ Admin ดึงข้อมูลเดิมมาแก้ไข ---
         window.loadRecordForAdmin = function() {
             const empId = document.getElementById('inputEmp').value;
             const dateStr = document.getElementById('inputDate').value;
             
             if(!empId || !dateStr) return;
             
-            // ค้นหาว่ามีข้อมูลของพนักงานและวันที่ ที่เลือกหรือไม่
             const record = window.allRecords.find(r => r.empId === empId && r.date === dateStr);
             
             if(record) {
-                // ถ้ามี โหลดข้อมูลเดิมใส่ช่อง
                 document.getElementById('inputStatus').value = record.status || 'work';
                 document.getElementById('inputTimeIn').value = (record.in && record.in !== '-') ? record.in : '';
                 document.getElementById('inputTimeOut').value = (record.out && record.out !== '-') ? record.out : '';
                 document.getElementById('inputNote').value = record.note || '';
             } else {
-                // ถ้าไม่มี เคลียร์ช่องเป็นค่าว่างเพื่อรอรับค่าใหม่
                 document.getElementById('inputStatus').value = 'work';
                 document.getElementById('inputTimeIn').value = '';
                 document.getElementById('inputTimeOut').value = '';
@@ -846,7 +852,6 @@
                 name: window.allEmployees[currentUserRole],
                 date: targetDateISO, 
                 status: 'work',
-                // แก้ไข 2: เอา 'แสกนผ่านแอป' ออก
                 note: existingRecord.note || '' 
             };
 
@@ -887,12 +892,6 @@
 
             if(success) {
                 window.showCustomModal("บันทึกข้อมูลเรียบร้อยแล้ว");
-                // ไม่ต้องเคลียร์ช่องหลังจากเซฟเสร็จ เพื่อให้เห็นค่าล่าสุด
-                // document.getElementById('inputDate').value = '';
-                // document.getElementById('inputTimeIn').value = '';
-                // document.getElementById('inputTimeOut').value = '';
-                // document.getElementById('inputNote').value = '';
-                // document.getElementById('inputStatus').value = 'work';
             }
         }
 
@@ -1002,12 +1001,14 @@
             const empId = currentUserRole === 'admin' ? document.getElementById('employeeSelect').value : currentUserRole;
             const empName = window.allEmployees[empId] || 'Report';
             
+            /* แก้ไขเพิ่ม: ปรับ Option บังคับไม่ให้ตัด Row ขาด */
             html2pdf().set({
-                margin: [10, 10, 10, 10], 
+                margin: [15, 10, 15, 10], 
                 filename: `Payroll_${empName}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'], avoid: 'tr' } 
             }).from(element).save();
         }
     </script>
