@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ระบบบันทึกเวลาทำงาน(Cloud Sync)</title>
+    <title>ระบบบันทึกเวลาทำงาน (Cloud Sync)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -27,7 +27,6 @@
         
         .pdf-table th, .pdf-table td { padding: 0.5rem 0.25rem; font-size: 0.85rem; text-align: center; }
         
-        /* แก้ไขเพิ่ม: ป้องกันตารางขาดครึ่งตอนเซฟ PDF แบบบังคับเด็ดขาด */
         .pdf-table { border-collapse: collapse; }
         .pdf-table tr { page-break-inside: avoid !important; break-inside: avoid-page !important; }
         
@@ -83,7 +82,8 @@
 
     <div id="appContent" class="max-w-4xl mx-auto hidden pb-24">
         
-        <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-4 flex justify-between items-center shadow-sm no-print">
+        <!-- แก้ไข: เพิ่ม id="topHeader" เพื่อให้สามารถสั่งซ่อน/แสดง ผ่าน JavaScript ได้ -->
+        <div id="topHeader" class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-4 flex justify-between items-center shadow-sm no-print transition-all duration-300">
             <div class="flex items-center gap-3">
                 <div class="bg-indigo-200 p-2 rounded-full flex items-center justify-center w-10 h-10">
                     <span id="headerAvatar" class="text-indigo-800 font-bold text-lg">👤</span>
@@ -99,7 +99,7 @@
             </button>
         </div>
 
-        <div id="entrySection" class="bg-white p-4 sm:p-6 rounded-xl shadow-md mb-6">
+        <div id="entrySection" class="bg-white p-4 sm:p-6 rounded-xl shadow-md mb-6 transition-all">
             <div id="adminEntryView" class="hidden">
                 <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">แก้ไข/บันทึกเวลาทำงานย้อนหลัง (HR)</h2>
                 <form onsubmit="handleAdminSubmit(event)" class="space-y-4">
@@ -145,20 +145,18 @@
                 </form>
             </div>
 
-            <!-- เริ่มแก้ไข: ดีไซน์ใหม่สไตล์ Minimal / Modern -->
-            <div id="employeeEntryView" class="hidden py-8 px-4 text-center max-w-sm mx-auto">
+            <!-- เริ่มแก้ไข: ดีไซน์ใหม่สไตล์ Minimal / ปรับฟอนต์ให้เล็กลงและไม่ล้นบรรทัด -->
+            <div id="employeeEntryView" class="hidden py-6 px-4 text-center max-w-sm mx-auto">
                 
-                <!-- Greeting -->
-                <div class="mb-8">
-                    <h2 class="text-3xl font-bold text-gray-900 tracking-tight">
-                        สวัสดี, <span id="empGreetingName" class="text-blue-600"></span>
-                    </h2>
-                    <p class="text-gray-500 mt-2 text-sm">Are You Ready?</p>
+                <!-- Greeting Area -->
+                <div class="mb-8 flex flex-col items-center justify-center">
+                    <span class="text-sm font-medium text-gray-500 mb-1 tracking-wide">สวัสดี,</span>
+                    <h3 id="empGreetingName" class="text-xl sm:text-2xl font-bold text-gray-800 tracking-tight leading-tight"></h3>
                 </div>
                 
                 <!-- Minimal Clock -->
                 <div class="mb-10">
-                    <p id="liveClock" class="text-6xl sm:text-7xl font-light text-gray-800 tracking-tighter tabular-nums mb-2">00:00</p>
+                    <p id="liveClock" class="text-[3.5rem] sm:text-6xl font-light text-gray-800 tracking-tighter tabular-nums mb-1">00:00</p>
                     <p id="liveDate" class="text-gray-500 text-sm font-medium">--</p>
                 </div>
 
@@ -175,7 +173,7 @@
                     </button>
                 </div>
             </div>
-            <!-- สิ้นสุดการแก้ไข: ดีไซน์ใหม่สไตล์ Minimal / Modern -->
+            <!-- สิ้นสุดการแก้ไข -->
         </div>
 
         <div id="reportSection" class="hidden">
@@ -753,6 +751,9 @@
             document.getElementById('reportSection').classList.add('hidden');
             document.getElementById('empManageSection').classList.add('hidden');
             
+            // ดึง element ของแถบ Header ด้านบนมาเตรียมไว้
+            const topHeader = document.getElementById('topHeader');
+            
             const navs = ['navEntry', 'navReport', 'navEmp'];
             navs.forEach(t => {
                 const el = document.getElementById(t);
@@ -766,15 +767,26 @@
                 document.getElementById('entrySection').classList.remove('hidden');
                 document.getElementById('navEntry').classList.remove('text-gray-400');
                 document.getElementById('navEntry').classList.add('text-blue-600', 'bg-blue-50');
+                
+                // ซ่อนแท็บ Header ตอนอยู่ในหน้าลงเวลา
+                if(topHeader) topHeader.classList.add('hidden');
+                
             } else if (tabId === 'report') {
                 document.getElementById('reportSection').classList.remove('hidden');
                 document.getElementById('navReport').classList.remove('text-gray-400');
                 document.getElementById('navReport').classList.add('text-blue-600', 'bg-blue-50');
+                
+                // แสดงแท็บ Header คืนมา เมื่ออยู่หน้าอื่น
+                if(topHeader) topHeader.classList.remove('hidden');
+                
                 renderReport();
             } else if (tabId === 'emp') {
                 document.getElementById('empManageSection').classList.remove('hidden');
                 document.getElementById('navEmp').classList.remove('text-gray-400');
                 document.getElementById('navEmp').classList.add('text-blue-600', 'bg-blue-50');
+                
+                // แสดงแท็บ Header คืนมา เมื่ออยู่หน้าอื่น
+                if(topHeader) topHeader.classList.remove('hidden');
             }
             
             window.scrollTo({ top: 0, behavior: 'smooth' });
