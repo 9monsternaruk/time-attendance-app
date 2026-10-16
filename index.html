@@ -358,20 +358,49 @@
         window.allRoles = {}; 
         window.allStatuses = {};
 
+        function seedDefaultEmployeesLocally() {
+            if (Object.keys(window.allEmployees).length === 0) {
+                window.allEmployees = {
+                    'A02927': 'อภิเสก วงค์ลังกา',
+                    'A02212': 'อนุกูลพันธ์ คุณา'
+                };
+                window.allPositions = {
+                    'A02927': 'เจ้าหน้าที่รักษาความปลอดภัย',
+                    'A02212': 'หัวหน้าชุด'
+                };
+                window.allPasswords = { 'A02927': '123', 'A02212': '123' };
+                window.allRoles = { 'A02927': 'employee', 'A02212': 'admin' };
+                window.allStatuses = { 'A02927': 'active', 'A02212': 'active' };
+            }
+        }
+
         async function initFirebase() {
             try {
                 const app = initializeApp(myNetlifyFirebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
-                await signInAnonymously(auth);
+                try {
+                    await signInAnonymously(auth);
+                } catch (authError) {
+                    console.warn("Firebase Auth Warning (continuing):", authError);
+                }
                 startRealtimeSync();
                 
-                checkLoginStatus();
+                if (typeof window.checkLoginStatus === 'function') {
+                    window.checkLoginStatus();
+                }
 
             } catch (error) {
                 console.error("Firebase Error:", error);
-                document.getElementById('loadingOverlay').innerHTML = `<p class="text-red-500 p-4 bg-white rounded text-center">เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล</p>`;
+                seedDefaultEmployeesLocally();
+                if (typeof window.updateEmployeeDropdowns === 'function') window.updateEmployeeDropdowns();
+                if (typeof window.renderEmployeeTable === 'function') window.renderEmployeeTable();
+                if (typeof window.checkLoginStatus === 'function') {
+                    window.checkLoginStatus();
+                } else {
+                    document.getElementById('loadingOverlay').innerHTML = `<p class="text-red-500 p-4 bg-white rounded text-center">เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล (${error.message || error})</p>`;
+                }
             }
         }
 
@@ -401,19 +430,33 @@
                     window.updateHeaderName();
                 }
 
-                updateEmployeeDropdowns();
-                renderEmployeeTable();
+                if (typeof window.updateEmployeeDropdowns === 'function') window.updateEmployeeDropdowns();
+                if (typeof window.renderEmployeeTable === 'function') window.renderEmployeeTable();
+            }, (err) => {
+                console.warn("Firestore Employees Sync Warning:", err);
+                seedDefaultEmployeesLocally();
+                if (typeof window.updateHeaderName === 'function') window.updateHeaderName();
+                if (typeof window.updateEmployeeDropdowns === 'function') window.updateEmployeeDropdowns();
+                if (typeof window.renderEmployeeTable === 'function') window.renderEmployeeTable();
             });
 
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'attendances'), (snapshot) => {
                 window.allRecords = [];
                 snapshot.forEach(doc => { window.allRecords.push(doc.data()); });
                 if(document.getElementById('reportSection').classList.contains('hidden') === false) window.renderReport();
+            }, (err) => {
+                console.warn("Firestore Attendances Sync Warning:", err);
             });
         }
 
         window.saveRecordToCloud = async function(recordData) {
             try {
+                if (recordData.status === 'reset') {
+                    const docId = `${recordData.empId}_${recordData.date}`;
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendances', docId));
+                    window.allRecords = window.allRecords.filter(r => !(r.empId === recordData.empId && r.date === recordData.date));
+                    return true;
+                }
                 const docId = `${recordData.empId}_${recordData.date}`;
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendances', docId), recordData, { merge: true });
                 return true;
@@ -450,8 +493,31 @@
 
     <script>
         let currentUserRole = null; 
+        let memorySavedUser = null;
         const ADMIN_USERNAME = 'admin';
         const ADMIN_PASSWORD = 'admin'; 
+
+        function safeGetStorage(key) {
+            try {
+                return localStorage.getItem(key);
+            } catch (e) {
+                return memorySavedUser;
+            }
+        }
+
+        function safeSetStorage(key, val) {
+            memorySavedUser = val;
+            try {
+                localStorage.setItem(key, val);
+            } catch (e) {}
+        }
+
+        function safeRemoveStorage(key) {
+            memorySavedUser = null;
+            try {
+                localStorage.removeItem(key);
+            } catch (e) {}
+        }
 
         window.showCustomModal = function(message, isConfirm = false, onConfirm = null) {
             const modal = document.getElementById('customModal');
@@ -481,7 +547,7 @@
         };
 
         function checkLoginStatus() {
-            const savedUser = localStorage.getItem('timeAttendanceUser');
+            const savedUser = safeGetStorage('timeAttendanceUser');
             document.getElementById('loadingOverlay').classList.add('hidden');
 
             if (savedUser) {
@@ -492,6 +558,7 @@
                 document.getElementById('bottomNav').classList.add('hidden');
             }
         }
+        window.checkLoginStatus = checkLoginStatus;
 
         function handleLoginSubmit(event) {
             event.preventDefault();
@@ -501,7 +568,7 @@
             
             if (usernameInput.toLowerCase() === ADMIN_USERNAME && passwordInput === ADMIN_PASSWORD) {
                 errorMsg.classList.add('hidden');
-                localStorage.setItem('timeAttendanceUser', 'admin'); 
+                safeSetStorage('timeAttendanceUser', 'admin'); 
                 proceedToApp('admin');
                 return;
             }
@@ -518,7 +585,7 @@
                     }
 
                     errorMsg.classList.add('hidden');
-                    localStorage.setItem('timeAttendanceUser', usernameInput); 
+                    safeSetStorage('timeAttendanceUser', usernameInput); 
                     proceedToApp(usernameInput);
                     return;
                 }
@@ -530,9 +597,12 @@
 
         function handleLogout() {
             window.showCustomModal('คุณต้องการออกจากระบบใช่หรือไม่?', true, () => {
-                localStorage.removeItem('timeAttendanceUser'); 
+                safeRemoveStorage('timeAttendanceUser'); 
                 clearInterval(clockInterval);
-                location.reload(); 
+                currentUserRole = null;
+                document.getElementById('loginUsername').value = '';
+                document.getElementById('loginPassword').value = '';
+                checkLoginStatus();
             });
         }
 
@@ -546,8 +616,14 @@
 
         let clockInterval;
         const STATUS_LABELS = {
-            'work': 'ทำงาน','OT': '7Day' 'leave_sick': 'ลาป่วย', 'leave_personal': 'ลากิจ', 
-            'leave_vacation': 'พักร้อน', 'holiday': 'วันหยุด', 'absent': 'ขาดงาน', 'reset': 'รีเซ็ต'
+            'work': 'ทำงาน',
+            'OT': '7Day',
+            'leave_sick': 'ลาป่วย',
+            'leave_personal': 'ลากิจ', 
+            'leave_vacation': 'พักร้อน',
+            'holiday': 'วันหยุด',
+            'absent': 'ขาดงาน',
+            'reset': 'รีเซ็ต'
         };
 
         function updateEmployeeDropdowns() {
@@ -573,6 +649,7 @@
                 }
             }
         }
+        window.updateEmployeeDropdowns = updateEmployeeDropdowns;
 
         window.updateHeaderName = function() {
             if (!currentUserRole) return;
@@ -668,6 +745,7 @@
                 `;
             });
         }
+        window.renderEmployeeTable = renderEmployeeTable;
 
         function editEmployee(id) {
             document.getElementById('newEmpId').value = id;
@@ -794,7 +872,8 @@
         }
 
         function toggleTimeInputs() {
-            const isWork = document.getElementById('inputStatus').value === 'work';
+            const statusVal = document.getElementById('inputStatus').value;
+            const isWork = statusVal === 'work' || statusVal === 'OT';
             document.querySelectorAll('.time-input').forEach(input => {
                 input.disabled = !isWork;
                 if(!isWork) input.value = '';
@@ -816,7 +895,6 @@
                 document.getElementById('inputNote').value = record.note || '';
             } else {
                 document.getElementById('inputStatus').value = 'work';
-                document.getElementById('inputStatus').value = 'OT';
                 document.getElementById('inputTimeIn').value = '';
                 document.getElementById('inputTimeOut').value = '';
                 document.getElementById('inputNote').value = '';
@@ -865,7 +943,7 @@
                 empId: currentUserRole,
                 name: window.allEmployees[currentUserRole],
                 date: targetDateISO, 
-                status: 'work',
+                status: existingRecord.status === 'OT' ? 'OT' : 'work',
                 note: existingRecord.note || '' 
             };
 
@@ -889,13 +967,14 @@
             const empId = document.getElementById('inputEmp').value;
             const status = document.getElementById('inputStatus').value;
             const btn = document.getElementById('btnAdminSave');
+            const isWorkStatus = status === 'work' || status === 'OT';
 
             const recordToSave = {
                 empId: empId,
                 name: window.allEmployees[empId],
                 date: document.getElementById('inputDate').value,
-                in: status === 'work' ? document.getElementById('inputTimeIn').value : '-',
-                out: status === 'work' ? document.getElementById('inputTimeOut').value : '-',
+                in: isWorkStatus ? document.getElementById('inputTimeIn').value : '-',
+                out: isWorkStatus ? document.getElementById('inputTimeOut').value : '-',
                 status: status,
                 note: document.getElementById('inputNote').value
             };
@@ -905,7 +984,7 @@
             btn.textContent = "บันทึกข้อมูลลงระบบ"; btn.disabled = false;
 
             if(success) {
-                window.showCustomModal("บันทึกข้อมูลเรียบร้อยแล้ว");
+                window.showCustomModal(status === 'reset' ? "ล้างข้อมูลของวันที่เลือกเรียบร้อยแล้ว" : "บันทึกข้อมูลเรียบร้อยแล้ว");
             }
         }
 
@@ -970,7 +1049,7 @@
                 let dayThai = getThaiDay(dStr);
                 let dateDisplay = `${dStr.split('-')[2]}/${dStr.split('-')[1]} (${dayThai})`;
 
-                if (!record) {
+                if (!record || record.status === 'reset') {
                     tbody.innerHTML += `
                         <tr class="border-b text-gray-400">
                             <td class="border border-gray-400">${dateDisplay}</td>
@@ -981,11 +1060,12 @@
                     `;
                 } else {
                     let stText = STATUS_LABELS[record.status] || record.status;
-                    let bgRow = record.status !== 'work' ? 'bg-orange-50 text-orange-800' : '';
+                    let isWorkStatus = record.status === 'work' || record.status === 'OT';
+                    let bgRow = !isWorkStatus ? 'bg-orange-50 text-orange-800' : '';
                     
                     let hrs = calculateHours(record.in, record.out);
                     
-                    if(record.status === 'work') {
+                    if(isWorkStatus) {
                         if(hrs > 0) sumDays++;
                     } else if (record.status !== 'absent') {
                         sumLeave++;
