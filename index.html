@@ -13,9 +13,11 @@
         body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
         .print-area { background-color: white; padding: 2rem; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); }
         @media print { 
+            @page { size: A4 landscape; margin: 6mm; }
             .no-print { display: none !important; } 
-            .print-area, .payslip-print-area { box-shadow: none !important; padding: 0 !important; margin: 0 !important; border: none !important; } 
-            body { background: white; } 
+            .print-area, .payslip-print-area { box-shadow: none !important; padding: 0 !important; margin: 0 auto !important; border: none !important; } 
+            body { background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } 
+            .slip-wrapper-scroll { overflow: visible !important; background: transparent !important; padding: 0 !important; box-shadow: none !important; }
         }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -43,7 +45,7 @@
             color: #111827;
             padding: 20px 24px;
             font-size: 11px;
-            line-height: 1.25;
+            line-height: 1.3;
             box-sizing: border-box;
             margin: 0 auto;
         }
@@ -62,7 +64,7 @@
             font-size: 9.5px;
             color: #374151;
             display: block;
-            line-height: 1.15;
+            line-height: 1.2;
         }
         .slip-cell-val {
             font-size: 11.5px;
@@ -241,7 +243,7 @@
                 <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
                     <select id="employeeSelect" class="border rounded-lg px-3 py-2 w-full dynamic-emp-dropdown hidden" onchange="syncSelectors('report')"></select>
                     <select id="cycleSelect" class="border rounded-lg px-3 py-2 w-full dynamic-cycle-dropdown" onchange="syncSelectors('report')"></select>
-                    <button onclick="generatePDF()" class="bg-indigo-700 hover:bg-indigo-800 transition-colors text-white font-bold px-4 py-2 rounded-lg whitespace-nowrap shadow flex items-center justify-center gap-2">
+                    <button id="btnPrintReportPdf" onclick="generatePDF()" class="bg-indigo-700 hover:bg-indigo-800 transition-colors text-white font-bold px-4 py-2 rounded-lg whitespace-nowrap shadow flex items-center justify-center gap-2">
                         <span>📄</span> บันทึกเป็น PDF
                     </button>
                 </div>
@@ -342,7 +344,7 @@
                         🔄 คำนวณใหม่
                     </button>
 
-                    <button onclick="generateSlipPDF()" class="bg-indigo-700 hover:bg-indigo-800 text-white font-bold px-4 py-2 rounded-lg text-sm shadow flex items-center gap-1.5 whitespace-nowrap ml-auto sm:ml-0">
+                    <button id="btnPrintSlipPdf" onclick="generateSlipPDF()" class="bg-indigo-700 hover:bg-indigo-800 text-white font-bold px-4 py-2 rounded-lg text-sm shadow flex items-center gap-1.5 whitespace-nowrap ml-auto sm:ml-0">
                         <span>🖨️</span> พิมพ์สลิป PDF
                     </button>
                 </div>
@@ -362,75 +364,101 @@
             </div>
 
             <!-- กรอบแสดงใบสลิป G4S (เลื่อนซ้ายขวาได้ในมือถือ) -->
-            <div class="overflow-x-auto pb-4 rounded-xl shadow-lg bg-gray-200 p-2 sm:p-4">
+            <div class="slip-wrapper-scroll overflow-x-auto pb-4 rounded-xl shadow-lg bg-gray-200 p-2 sm:p-4">
                 <div id="slipToPrint" class="payslip-container payslip-print-area rounded shadow-sm">
                     
-                    <!-- Header Section -->
-                    <div class="grid grid-cols-12 gap-2 pb-2 items-start">
-                        <!-- โลโก้และที่อยู่บริษัท -->
-                        <div class="col-span-5 pr-2">
-                            <div class="flex items-center gap-2 mb-1">
-                                <div class="font-black text-3xl tracking-tighter text-gray-900 flex items-center leading-none">
-                                    <span>G</span><span class="text-red-600">4</span><span>S</span>
-                                </div>
-                                <div class="text-[9px] text-gray-600 border-l border-gray-400 pl-2 leading-tight font-semibold">
-                                    An ALLIED UNIVERSAL Company
-                                </div>
-                            </div>
-                            <p class="font-bold text-[11px] text-gray-900">บริษัท รักษาความปลอดภัย จี4เอส เซอร์วิสเซส (ประเทศไทย) จำกัด</p>
-                            <p class="text-[9.5px] text-gray-700">588 ซอยศรีนครินทร์ 16 ถนนศรีนครินทร์ แขวงพัฒนาการ เขตสวนหลวง กรุงเทพมหานคร 10250</p>
-                            <p class="text-[9px] text-gray-600">Local speakout สายด่วนในประเทศ : 02-020-2432, 02-020-2400 &nbsp; Email : speakout@g4s.com</p>
-                            <p class="text-[9px] text-gray-600">Global hotline สายด่วนต่างประเทศ : 001 800 11 0032241</p>
-                            <p class="text-[8.5px] text-gray-500">https://www.g4s.com/social-responsibility/safeguarding-our-integrity/whistleblowing</p>
-                        </div>
+                    <!-- Header Section (ใช้ Table แทน Grid/Flex เพื่อป้องกัน html2canvas คำนวณตำแหน่งเพี้ยนบน iOS/Safari) -->
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px; border: none;">
+                        <tbody>
+                            <tr>
+                                <!-- โลโก้และที่อยู่บริษัท -->
+                                <td style="width: 43%; vertical-align: top; border: none; padding: 0 8px 0 0;">
+                                    <div style="margin-bottom: 4px;">
+                                        <span style="font-weight: 900; font-size: 28px; letter-spacing: -1px; color: #111827; line-height: 1; display: inline-block; vertical-align: middle;">
+                                            G<span style="color: #dc2626;">4</span>S
+                                        </span>
+                                        <span style="font-size: 9px; color: #4b5563; border-left: 1px solid #9ca3af; padding-left: 8px; margin-left: 6px; font-weight: 600; display: inline-block; vertical-align: middle; line-height: 1.2;">
+                                            An ALLIED UNIVERSAL Company
+                                        </span>
+                                    </div>
+                                    <p class="font-bold text-[11px] text-gray-900">บริษัท รักษาความปลอดภัย จี4เอส เซอร์วิสเซส (ประเทศไทย) จำกัด</p>
+                                    <p class="text-[9.5px] text-gray-700">588 ซอยศรีนครินทร์ 16 ถนนศรีนครินทร์ แขวงพัฒนาการ เขตสวนหลวง กรุงเทพมหานคร 10250</p>
+                                    <p class="text-[9px] text-gray-600">Local speakout สายด่วนในประเทศ : 02-020-2432, 02-020-2400 &nbsp; Email : speakout@g4s.com</p>
+                                    <p class="text-[9px] text-gray-600">Global hotline สายด่วนต่างประเทศ : 001 800 11 0032241</p>
+                                    <p class="text-[8.5px] text-gray-500">https://www.g4s.com/social-responsibility/safeguarding-our-integrity/whistleblowing</p>
+                                </td>
 
-                        <!-- ชื่อเอกสาร และประจำเดือน -->
-                        <div class="col-span-4 text-center pt-1">
-                            <div class="inline-block border-2 border-gray-800 px-6 py-1 bg-gray-50 mb-2">
-                                <h2 class="font-bold text-sm tracking-wide text-gray-900">ใบแจ้งรายได้ / PAY SLIP</h2>
-                            </div>
-                            <div class="text-[11px] space-y-1 text-left pl-4">
-                                <p><span class="font-semibold text-gray-600">ประจำเดือน (As of):</span> <span id="slip_periodText" class="font-bold">16/08/2026 - 15/09/2026</span></p>
-                                <p class="flex items-center gap-1">
-                                    <span class="font-semibold text-gray-600">งวดที่ (Period No.):</span> 
-                                    <span id="view_periodNo" class="font-bold slip-view-field">249</span>
-                                    <input type="text" id="edit_periodNo" class="slip-input slip-input-center hidden w-16" value="249">
-                                </p>
-                                <p class="flex items-center gap-1">
-                                    <span class="font-semibold text-gray-600">วันที่จ่ายเงิน (Pay Date):</span> 
-                                    <span id="view_payDate" class="font-bold slip-view-field">30/09/2026</span>
-                                    <input type="text" id="edit_payDate" class="slip-input slip-input-center hidden w-28" value="30/09/2026">
-                                </p>
-                            </div>
-                        </div>
+                                <!-- ชื่อเอกสาร และประจำเดือน (ใช้ Table ล้วนเพื่อไม่ให้กรอบทับข้อความเวลาเซฟ PDF) -->
+                                <td style="width: 32%; vertical-align: top; text-align: center; border: none; padding: 2px 4px 0 4px;">
+                                    <table style="margin: 0 auto 8px auto; border-collapse: collapse; width: 220px;">
+                                        <tbody>
+                                            <tr>
+                                                <td style="border: 2px solid #1f2937; background-color: #f9fafb; padding: 6px 12px; text-align: center; font-weight: 700; font-size: 13.5px; color: #111827; line-height: 1.3;">
+                                                    ใบแจ้งรายได้ / PAY SLIP
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <div style="font-size: 11px; text-align: left; padding-left: 18px; line-height: 1.55;">
+                                        <div><span class="font-semibold text-gray-600">ประจำเดือน (As of):</span> <span id="slip_periodText" class="font-bold">16/08/2026 - 15/09/2026</span></div>
+                                        <div>
+                                            <span class="font-semibold text-gray-600">งวดที่ (Period No.):</span> 
+                                            <span id="view_periodNo" class="font-bold slip-view-field">249</span>
+                                            <input type="text" id="edit_periodNo" class="slip-input slip-input-center hidden w-16" style="display: inline-block; width: 65px;" value="249">
+                                        </div>
+                                        <div>
+                                            <span class="font-semibold text-gray-600">วันที่จ่ายเงิน (Pay Date):</span> 
+                                            <span id="view_payDate" class="font-bold slip-view-field">30/09/2026</span>
+                                            <input type="text" id="edit_payDate" class="slip-input slip-input-center hidden w-28" style="display: inline-block; width: 100px;" value="30/09/2026">
+                                        </div>
+                                    </div>
+                                </td>
 
-                        <!-- ข้อมูลพนักงาน -->
-                        <div class="col-span-3 text-[10.5px] border border-gray-800 p-2 bg-gray-50 space-y-1">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">ประเภทพนักงาน:</span>
-                                <span id="view_empType" class="font-bold slip-view-field">Direct Staff</span>
-                                <input type="text" id="edit_empType" class="slip-input hidden w-24" value="Direct Staff">
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">เขต (Zone):</span>
-                                <span id="view_zone" class="font-bold slip-view-field">Northern</span>
-                                <input type="text" id="edit_zone" class="slip-input hidden w-24" value="Northern">
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">แผนก (Dept):</span>
-                                <span id="view_dept" class="font-bold slip-view-field">ปฏิบัติการ</span>
-                                <input type="text" id="edit_dept" class="slip-input hidden w-24" value="ปฏิบัติการ">
-                            </div>
-                            <div class="border-t border-gray-300 my-1 pt-1 flex justify-between">
-                                <span class="text-gray-600">รหัสพนักงาน:</span>
-                                <span id="slip_empId" class="font-bold text-xs text-blue-900">A03306</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">ชื่อพนักงาน:</span>
-                                <span id="slip_empName" class="font-bold text-right">ธงเดชณรงค์ ลูณสาคร</span>
-                            </div>
-                        </div>
-                    </div>
+                                <!-- ข้อมูลพนักงาน -->
+                                <td style="width: 25%; vertical-align: top; border: none; padding: 0;">
+                                    <div class="text-[10.5px] border border-gray-800 p-2 bg-gray-50">
+                                        <table style="width: 100%; border-collapse: collapse; border: none;">
+                                            <tbody>
+                                                <tr>
+                                                    <td style="border: none; padding: 1.5px 0; color: #4b5563;">ประเภทพนักงาน:</td>
+                                                    <td style="border: none; padding: 1.5px 0; text-align: right;">
+                                                        <span id="view_empType" class="font-bold slip-view-field">Direct Staff</span>
+                                                        <input type="text" id="edit_empType" class="slip-input hidden w-24" value="Direct Staff">
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="border: none; padding: 1.5px 0; color: #4b5563;">เขต (Zone):</td>
+                                                    <td style="border: none; padding: 1.5px 0; text-align: right;">
+                                                        <span id="view_zone" class="font-bold slip-view-field">Northern</span>
+                                                        <input type="text" id="edit_zone" class="slip-input hidden w-24" value="Northern">
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="border: none; padding: 1.5px 0 3px 0; color: #4b5563; border-bottom: 1px solid #d1d5db;">แผนก (Dept):</td>
+                                                    <td style="border: none; padding: 1.5px 0 3px 0; text-align: right; border-bottom: 1px solid #d1d5db;">
+                                                        <span id="view_dept" class="font-bold slip-view-field">ปฏิบัติการ</span>
+                                                        <input type="text" id="edit_dept" class="slip-input hidden w-24" value="ปฏิบัติการ">
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="border: none; padding: 3px 0 1.5px 0; color: #4b5563;">รหัสพนักงาน:</td>
+                                                    <td style="border: none; padding: 3px 0 1.5px 0; text-align: right;">
+                                                        <span id="slip_empId" class="font-bold text-xs text-blue-900">A03306</span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="border: none; padding: 1.5px 0; color: #4b5563;">ชื่อพนักงาน:</td>
+                                                    <td style="border: none; padding: 1.5px 0; text-align: right;">
+                                                        <span id="slip_empName" class="font-bold">ธงเดชณรงค์ ลูณสาคร</span>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
 
                     <!-- ตารางหลัก: รายการเงินได้ และ รายการเงินหัก (9 คอลัมน์เหมือนต้นฉบับ) -->
                     <table class="slip-table mb-2">
@@ -703,42 +731,46 @@
                         </tbody>
                     </table>
 
-                    <!-- แถบชั่วโมงทำงาน อัตราค่าจ้าง และ ลายเซ็น -->
-                    <div class="grid grid-cols-12 gap-2 items-end pt-1">
-                        <div class="col-span-5">
-                            <table class="slip-table">
-                                <tbody>
-                                    <tr>
-                                        <td class="w-1/2 bg-gray-50">
-                                            <span class="slip-cell-title">จำนวนรายชั่วโมงทุกประเภท (Total hours)</span>
-                                            <span id="view_totalHours" class="slip-cell-val text-center slip-view-field">312.00</span>
-                                            <input type="number" step="0.01" id="edit_totalHours" class="slip-input slip-input-center hidden">
-                                        </td>
-                                        <td class="w-1/2 bg-gray-50">
-                                            <span class="slip-cell-title">อัตราค่าจ้างต่อชั่วโมง (Wage Rate/Hours)</span>
-                                            <span id="view_wageRate" class="slip-cell-val text-center slip-view-field">47.500</span>
-                                            <input type="number" step="0.001" id="edit_wageRate" class="slip-input slip-input-center hidden" oninput="onWageRateChange()">
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <div class="mt-1.5 text-[9.5px] text-gray-600 leading-snug">
-                                <p><strong>หมายเหตุ (Remark):</strong> บริษัทถือว่าเงินเดือนและค่าจ้างเป็นความลับห้ามเปิดเผย กรณีข้อมูลไม่ถูกต้องกรุณาแจ้งแผนกเงินเดือน</p>
-                                <p>เอกสารฉบับนี้เป็นเอกสารสำคัญออกจากระบบอิเล็กทรอนิกส์ ออกโดยบริษัทซึ่งสามารถใช้แทนหนังสือรับรองการทำงานและหนังสือรับรองเงินเดือนได้</p>
-                            </div>
-                        </div>
+                    <!-- แถบชั่วโมงทำงาน อัตราค่าจ้าง และ ลายเซ็น (ใช้ Table แทน Grid เพื่อความเสถียรเวลาสร้าง PDF) -->
+                    <table style="width: 100%; border-collapse: collapse; border: none; margin-top: 4px;">
+                        <tbody>
+                            <tr>
+                                <td style="width: 42%; vertical-align: bottom; border: none; padding: 0;">
+                                    <table class="slip-table">
+                                        <tbody>
+                                            <tr>
+                                                <td class="w-1/2 bg-gray-50">
+                                                    <span class="slip-cell-title">จำนวนรายชั่วโมงทุกประเภท (Total hours)</span>
+                                                    <span id="view_totalHours" class="slip-cell-val text-center slip-view-field">312.00</span>
+                                                    <input type="number" step="0.01" id="edit_totalHours" class="slip-input slip-input-center hidden">
+                                                </td>
+                                                <td class="w-1/2 bg-gray-50">
+                                                    <span class="slip-cell-title">อัตราค่าจ้างต่อชั่วโมง (Wage Rate/Hours)</span>
+                                                    <span id="view_wageRate" class="slip-cell-val text-center slip-view-field">47.500</span>
+                                                    <input type="number" step="0.001" id="edit_wageRate" class="slip-input slip-input-center hidden" oninput="onWageRateChange()">
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <div class="mt-1.5 text-[9.5px] text-gray-600 leading-snug">
+                                        <p><strong>หมายเหตุ (Remark):</strong> บริษัทถือว่าเงินเดือนและค่าจ้างเป็นความลับห้ามเปิดเผย กรณีข้อมูลไม่ถูกต้องกรุณาแจ้งแผนกเงินเดือน</p>
+                                        <p>เอกสารฉบับนี้เป็นเอกสารสำคัญออกจากระบบอิเล็กทรอนิกส์ ออกโดยบริษัทซึ่งสามารถใช้แทนหนังสือรับรองการทำงานและหนังสือรับรองเงินเดือนได้</p>
+                                    </div>
+                                </td>
 
-                        <div class="col-span-4 text-center px-2">
-                            <div id="slip_deductionNote" class="text-[10px] text-gray-700 border border-dashed border-gray-400 rounded p-1.5 bg-gray-50">
-                                สรุปยอดหักสะสม: ใบอนุญาต รปภ. 0/5,000 บ. | ค่าชุด 0/2,500 บ.
-                            </div>
-                        </div>
+                                <td style="width: 33%; vertical-align: bottom; text-align: center; border: none; padding: 0 10px;">
+                                    <div id="slip_deductionNote" class="text-[10px] text-gray-700 border border-dashed border-gray-400 rounded p-1.5 bg-gray-50">
+                                        สรุปยอดหักสะสม: ใบอนุญาต รปภ. 0/5,000 บ. | ค่าชุด 0/2,500 บ.
+                                    </div>
+                                </td>
 
-                        <div class="col-span-3 text-center pt-4">
-                            <div class="border-b border-gray-800 w-4/5 mx-auto mb-1"></div>
-                            <p class="text-[10px] font-semibold">ผู้รับเงิน / Recipient's Signature</p>
-                        </div>
-                    </div>
+                                <td style="width: 25%; vertical-align: bottom; text-align: center; border: none; padding: 16px 0 0 0;">
+                                    <div style="border-bottom: 1px solid #1f2937; width: 80%; margin: 0 auto 4px auto;"></div>
+                                    <p class="text-[10px] font-semibold">ผู้รับเงิน / Recipient's Signature</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
 
                 </div>
             </div>
@@ -2192,38 +2224,117 @@
             });
         };
 
-        function generatePDF() {
+        // ฟังก์ชันช่วยแปลง Element เป็น PDF โดยโคลนออกมาวางนอก Scroll Container
+        // เพื่อแก้ปัญหาข้อความหาย/ซ้อนทับ/ถูกตัดขอบ บน iPad, iPhone (Safari) และทุกอุปกรณ์
+        async function exportElementToPdfClean(sourceEl, targetWidthPx, pdfOptions, btnEl, defaultBtnHtml) {
+            if (btnEl) {
+                btnEl.innerHTML = '<span>⏳</span> กำลังสร้าง PDF...';
+                btnEl.disabled = true;
+            }
+
+            // สร้างพื้นที่จำลองชั่วคราวที่ไม่ถูกจำกัดด้วย overflow-x-auto หรือตำแหน่ง Scroll
+            const tempWrapper = document.createElement('div');
+            tempWrapper.style.position = 'fixed';
+            tempWrapper.style.top = '0';
+            tempWrapper.style.left = '0';
+            tempWrapper.style.width = targetWidthPx + 'px';
+            tempWrapper.style.zIndex = '-9999';
+            tempWrapper.style.backgroundColor = '#ffffff';
+            tempWrapper.style.overflow = 'visible';
+
+            const cloneEl = sourceEl.cloneNode(true);
+            cloneEl.style.margin = '0';
+            cloneEl.style.width = targetWidthPx + 'px';
+            cloneEl.style.minWidth = targetWidthPx + 'px';
+            cloneEl.style.maxWidth = targetWidthPx + 'px';
+            cloneEl.style.boxShadow = 'none';
+
+            // ลบช่อง input ที่ซ่อนอยู่ออกจาก Clone เพื่อไม่ให้ html2canvas คำนวณ Layout ผิดพลาด
+            cloneEl.querySelectorAll('input.hidden, .hidden').forEach(el => el.remove());
+
+            tempWrapper.appendChild(cloneEl);
+            document.body.appendChild(tempWrapper);
+
+            try {
+                if (document.fonts && document.fonts.ready) {
+                    await document.fonts.ready;
+                }
+                // รอให้ Browser วาด Layout ของ Clone เสร็จสมบูรณ์
+                await new Promise(r => setTimeout(r, 150));
+
+                await html2pdf().set({
+                    ...pdfOptions,
+                    html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        logging: false,
+                        backgroundColor: '#ffffff',
+                        width: targetWidthPx,
+                        windowWidth: targetWidthPx,
+                        scrollX: 0,
+                        scrollY: 0,
+                        x: 0,
+                        y: 0
+                    }
+                }).from(cloneEl).save();
+            } catch (err) {
+                console.error("PDF Export Error:", err);
+                window.showCustomModal("เกิดข้อผิดพลาดในการสร้าง PDF กรุณาลองใหม่อีกครั้ง");
+            } finally {
+                if (tempWrapper && tempWrapper.parentNode) {
+                    tempWrapper.parentNode.removeChild(tempWrapper);
+                }
+                if (btnEl) {
+                    btnEl.innerHTML = defaultBtnHtml;
+                    btnEl.disabled = false;
+                }
+            }
+        }
+
+        window.generatePDF = async function() {
             const element = document.getElementById('reportToPrint');
+            const btn = document.getElementById('btnPrintReportPdf');
             const empId = isCurrentUserAdmin() ? document.getElementById('employeeSelect').value : currentUserRole;
             const empName = window.allEmployees[empId] || 'Report';
             
-            html2pdf().set({
-                margin: [15, 10, 15, 10], 
-                filename: `Attendance_${empId}_${empName}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['css', 'legacy'], avoid: 'tr' } 
-            }).from(element).save();
-        }
+            await exportElementToPdfClean(
+                element,
+                794, // ความกว้างมาตรฐาน A4 แนวตั้ง
+                {
+                    margin: [10, 10, 10, 10], 
+                    filename: `Attendance_${empId}_${empName}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['css', 'legacy'], avoid: 'tr' } 
+                },
+                btn,
+                '<span>📄</span> บันทึกเป็น PDF'
+            );
+        };
 
-        window.generateSlipPDF = function() {
+        window.generateSlipPDF = async function() {
             if (isSlipEditMode) {
                 exitSlipEditMode();
                 window.renderSlip();
             }
             const element = document.getElementById('slipToPrint');
+            const btn = document.getElementById('btnPrintSlipPdf');
             const empId = isCurrentUserAdmin() ? document.getElementById('slipEmployeeSelect').value : currentUserRole;
             const empName = window.allEmployees[empId] || 'PaySlip';
             const cycleVal = document.getElementById('slipCycleSelect').value;
 
-            html2pdf().set({
-                margin: [8, 6, 8, 6],
-                filename: `PaySlip_${empId}_${empName}_${cycleVal}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, windowWidth: 1060 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-            }).from(element).save();
+            await exportElementToPdfClean(
+                element,
+                1020, // ความกว้างมาตรฐานของใบสลิปแนวนอน
+                {
+                    margin: [8, 6, 8, 6],
+                    filename: `PaySlip_${empId}_${empName}_${cycleVal}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                },
+                btn,
+                '<span>🖨️</span> พิมพ์สลิป PDF'
+            );
         };
     </script>
 </body>
