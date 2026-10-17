@@ -351,9 +351,9 @@
             <div class="bg-white p-4 rounded-xl shadow-md mb-4 flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center no-print">
                 <div>
                     <h1 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <span>💵</span> ใบแจ้งรายได้ / สลิปเงินเดือน (Pay Slip)
+                        <span>💵</span>สลิปเงินเดือน (Pay Slip)
                     </h1>
-                    <p id="slipSubStatus" class="text-xs text-gray-500 mt-0.5">คำนวณอัตโนมัติจากข้อมูลลงเวลาทำงาน (เรท G4S 47.50 บ./ชม.)</p>
+                    <p id="slipSubStatus" class="text-xs text-gray-500 mt-0.5">(เรท G4S 47.50 บ./ชม.)</p>
                 </div>
 
                 <div class="flex flex-wrap gap-2 w-full lg:w-auto items-center">
@@ -362,7 +362,7 @@
                     
                     <!-- ปุ่มเฉพาะ Admin -->
                     <button id="btnAdminEditSlip" onclick="toggleSlipEditMode()" class="hidden bg-amber-500 hover:bg-amber-600 text-white font-semibold px-3 py-2 rounded-lg text-sm shadow-sm transition-colors flex items-center gap-1.5 whitespace-nowrap">
-                        <span>✏️</span> <span id="btnEditSlipText">แก้ไขตัวเลข (HR)</span>
+                        <span>✏️</span> <span id="btnEditSlipText">แก้ไขตัวเลข</span>
                     </button>
                     <button id="btnAdminSaveSlip" onclick="saveSlipOverride()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-2 rounded-lg text-sm shadow-sm transition-colors flex items-center gap-1.5 whitespace-nowrap">
                         <span>💾</span> บันทึกสลิป
@@ -386,7 +386,7 @@
                     <span>• ค่าชุด (2,500): หักงวดนี้ <strong id="infoUniDed" class="text-rose-600">0.00</strong> บ. (สะสม <strong id="infoUniAcc">0.00</strong> / คงเหลือ <strong id="infoUniRem">2,500.00</strong>)</span>
                 </div>
                 <span id="badgeCustomOverride" class="hidden bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-0.5 rounded-full font-semibold text-xs">
-                    📌 ปรับปรุงตัวเลขโดย HR แล้ว
+                    📌 ปรับปรุงตัวเลขแล้ว
                 </span>
             </div>
 
@@ -1351,10 +1351,10 @@
             
             if (currentUserRole !== 'admin' && currentUserRole !== null) {
                 if (!window.allEmployees[currentUserRole]) {
-                    window.showCustomModal('บัญชีของคุณถูกลบออกจากระบบ กรุณาติดต่อ HR', false);
+                    window.showCustomModal('บัญชีของคุณถูกลบออกจากระบบ กรุณาติดต่อ Admin', false);
                     handleLogout();
                 } else if (window.allStatuses[currentUserRole] === 'blocked') {
-                    window.showCustomModal('บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อ HR', false);
+                    window.showCustomModal('บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อ Admin', false);
                     handleLogout();
                 }
             }
