@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th">/* แก้ไขเรื่อง PDF */
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -11,6 +11,18 @@
     
     <style>
         body { font-family: 'Sarabun', sans-serif; background-color: #f3f4f6; }
+
+        /* แก้บั๊กสำคัญของ Tailwind CSS Preflight (img { display: block }) ที่ทำให้ html2canvas คำนวณ Baseline ของฟอนต์ไทยเพี้ยน
+           จนตัวหนังสือเลื่อนตกขอบ ทับเส้นตาราง หรือหายไปจากกรอบเวลาสั่งพิมพ์ PDF บน iPad/iPhone/Safari และทุกเบราว์เซอร์ */
+        img {
+            display: inline !important;
+            vertical-align: baseline !important;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
         .print-area { background-color: white; padding: 2rem; border-radius: 0.5rem; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); }
         @media print { 
             @page { size: A4 landscape; margin: 6mm; }
@@ -34,6 +46,17 @@
         .pdf-table th, .pdf-table td { padding: 0.5rem 0.25rem; font-size: 0.85rem; text-align: center; }
         .pdf-table { border-collapse: collapse; }
         .pdf-table tr { page-break-inside: avoid !important; break-inside: avoid-page !important; }
+
+        /* สไตล์ย่อขนาดตารางรายงานสรุปเวลาทำงานเมื่อสร้าง PDF เพื่อให้อยู่ใน 1 หน้า A4 อย่างสวยงาม */
+        .pdf-export-compact {
+            padding: 12px 20px !important;
+        }
+        .pdf-export-compact .pdf-table th,
+        .pdf-export-compact .pdf-table td {
+            padding: 2px 4px !important;
+            font-size: 10.5px !important;
+            line-height: 1.2 !important;
+        }
         
         .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 1rem); }
 
@@ -45,7 +68,7 @@
             color: #111827;
             padding: 20px 24px;
             font-size: 11px;
-            line-height: 1.3;
+            line-height: 1.35;
             box-sizing: border-box;
             margin: 0 auto;
         }
@@ -58,13 +81,13 @@
             border: 1px solid #222;
             padding: 3px 5px;
             vertical-align: top;
-            overflow: hidden;
+            overflow: visible;
         }
         .slip-cell-title {
             font-size: 9.5px;
             color: #374151;
             display: block;
-            line-height: 1.2;
+            line-height: 1.25;
         }
         .slip-cell-val {
             font-size: 11.5px;
@@ -73,6 +96,7 @@
             display: block;
             margin-top: 2px;
             min-height: 15px;
+            line-height: 1.3;
             color: #000;
         }
         .slip-input {
@@ -97,6 +121,9 @@
         }
         .slip-input-center {
             text-align: center;
+        }
+        .slip-input-inline {
+            display: inline-block;
         }
     </style>
 </head>
@@ -165,7 +192,7 @@
             </button>
         </div>
 
-        <div id="entrySection" class="bg-white p-4 sm:p-6 rounded-xl shadow-md mb-6 transition-all max-w-4xl mx-auto">
+        <div id="entrySection" class="bg-white p-4 sm:p-6 rounded-xl shadow-md mb-6 transition-all max-w-4xl mx-auto no-print">
             <div id="adminEntryView" class="hidden">
                 <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">แก้ไข/บันทึกเวลาทำงานย้อนหลัง (HR)</h2>
                 <form onsubmit="handleAdminSubmit(event)" class="space-y-4">
@@ -250,12 +277,12 @@
             </div>
 
             <div id="reportToPrint" class="print-area">
-                <div class="text-center mb-6">
+                <div class="text-center mb-4">
                     <h2 class="text-2xl font-bold">รายงานสรุปเวลาทำงาน</h2>
                     <p>Time Attendance Report</p>
-                    <p class="text-base mt-2">รอบการทำงาน: <span id="displayCycle" class="font-bold underline">--</span></p>
+                    <p class="text-base mt-1">รอบการทำงาน: <span id="displayCycle" class="font-bold underline">--</span></p>
                 </div>
-                <div class="flex justify-between mb-4 text-sm border-b-2 border-gray-800 pb-2">
+                <div class="flex justify-between mb-3 text-sm border-b-2 border-gray-800 pb-2">
                     <div>
                         <p><span class="font-semibold w-24 inline-block">รหัสพนักงาน:</span> <span id="displayEmpId" class="font-bold text-base"></span></p>
                         <p><span class="font-semibold w-24 inline-block">ชื่อ-สกุล:</span> <span id="displayEmpName" class="font-bold text-base"></span></p>
@@ -266,7 +293,7 @@
                     </div>
                 </div>
 
-                <table class="min-w-full border-collapse border border-gray-400 mb-6 text-sm pdf-table">
+                <table class="min-w-full border-collapse border border-gray-400 mb-4 text-sm pdf-table">
                     <thead class="bg-gray-200 font-bold">
                         <tr>
                             <th class="border border-gray-400 w-24">วันที่</th>
@@ -280,8 +307,8 @@
                     <tbody id="tableBody"></tbody>
                 </table>
                 
-                <div class="bg-gray-100 border border-gray-400 rounded-lg p-4 mb-8 page-break-inside-avoid">
-                    <h3 class="font-bold text-center border-b border-gray-300 pb-2 mb-3">สรุปผลการปฏิบัติงานประจำรอบ (Payroll Summary)</h3>
+                <div class="bg-gray-100 border border-gray-400 rounded-lg p-3 mb-6 page-break-inside-avoid">
+                    <h3 class="font-bold text-center border-b border-gray-300 pb-1.5 mb-2.5">สรุปผลการปฏิบัติงานประจำรอบ (Payroll Summary)</h3>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center max-w-2xl mx-auto">
                         <div class="bg-white p-2 border rounded shadow-sm">
                             <p class="text-xs text-gray-500">วันทำงานปกติ</p>
@@ -302,18 +329,18 @@
                     </div>
                 </div>
 
-                <div class="flex justify-between text-center mt-12 px-8 page-break-inside-avoid">
+                <div class="flex justify-between text-center mt-8 px-8 page-break-inside-avoid">
                     <div>
                         <p>.......................................................</p>
-                        <p class="text-sm mt-2">พนักงานผู้ปฏิบัติงาน</p>
+                        <p class="text-sm mt-1.5">พนักงานผู้ปฏิบัติงาน</p>
                     </div>
                     <div>
                         <p>.......................................................</p>
-                        <p class="text-sm mt-2">หัวหน้างานผู้อนุมัติ</p>
+                        <p class="text-sm mt-1.5">หัวหน้างานผู้อนุมัติ</p>
                     </div>
                     <div>
                         <p>.......................................................</p>
-                        <p class="text-sm mt-2">ฝ่ายบุคคล / บัญชี</p>
+                        <p class="text-sm mt-1.5">ฝ่ายบุคคล / บัญชี</p>
                     </div>
                 </div>
             </div>
@@ -367,7 +394,7 @@
             <div class="slip-wrapper-scroll overflow-x-auto pb-4 rounded-xl shadow-lg bg-gray-200 p-2 sm:p-4">
                 <div id="slipToPrint" class="payslip-container payslip-print-area rounded shadow-sm">
                     
-                    <!-- Header Section (ใช้ Table แทน Grid/Flex เพื่อป้องกัน html2canvas คำนวณตำแหน่งเพี้ยนบน iOS/Safari) -->
+                    <!-- Header Section -->
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px; border: none;">
                         <tbody>
                             <tr>
@@ -388,28 +415,30 @@
                                     <p class="text-[8.5px] text-gray-500">https://www.g4s.com/social-responsibility/safeguarding-our-integrity/whistleblowing</p>
                                 </td>
 
-                                <!-- ชื่อเอกสาร และประจำเดือน (ใช้ Table ล้วนเพื่อไม่ให้กรอบทับข้อความเวลาเซฟ PDF) -->
-                                <td style="width: 32%; vertical-align: top; text-align: center; border: none; padding: 2px 4px 0 4px;">
-                                    <table style="margin: 0 auto 8px auto; border-collapse: collapse; width: 220px;">
-                                        <tbody>
-                                            <tr>
-                                                <td style="border: 2px solid #1f2937; background-color: #f9fafb; padding: 6px 12px; text-align: center; font-weight: 700; font-size: 13.5px; color: #111827; line-height: 1.3;">
-                                                    ใบแจ้งรายได้ / PAY SLIP
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                <!-- ชื่อเอกสาร และประจำเดือน (ใช้โครงสร้าง .slip-table + .slip-cell-val แบบเต็มความกว้าง Padding เพื่อไม่ให้ข้อความหายบน iPad/Safari) -->
+                                <td style="width: 32%; vertical-align: top; border: none; padding: 2px 4px 0 4px;">
+                                    <div style="padding: 0 42px; margin-bottom: 8px;">
+                                        <table class="slip-table">
+                                            <tbody>
+                                                <tr>
+                                                    <td class="bg-gray-50" style="border: 2px solid #1f2937; padding: 5px 8px; text-align: center;">
+                                                        <span class="slip-cell-val text-center" style="font-size: 13.5px; font-weight: 700; text-align: center; margin: 0; line-height: 1.35; color: #111827;">ใบแจ้งรายได้ / PAY SLIP</span>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                     <div style="font-size: 11px; text-align: left; padding-left: 18px; line-height: 1.55;">
                                         <div><span class="font-semibold text-gray-600">ประจำเดือน (As of):</span> <span id="slip_periodText" class="font-bold">16/08/2026 - 15/09/2026</span></div>
                                         <div>
                                             <span class="font-semibold text-gray-600">งวดที่ (Period No.):</span> 
                                             <span id="view_periodNo" class="font-bold slip-view-field">249</span>
-                                            <input type="text" id="edit_periodNo" class="slip-input slip-input-center hidden w-16" style="display: inline-block; width: 65px;" value="249">
+                                            <input type="text" id="edit_periodNo" class="slip-input slip-input-center slip-input-inline hidden" style="width: 65px;" value="249">
                                         </div>
                                         <div>
                                             <span class="font-semibold text-gray-600">วันที่จ่ายเงิน (Pay Date):</span> 
                                             <span id="view_payDate" class="font-bold slip-view-field">30/09/2026</span>
-                                            <input type="text" id="edit_payDate" class="slip-input slip-input-center hidden w-28" style="display: inline-block; width: 100px;" value="30/09/2026">
+                                            <input type="text" id="edit_payDate" class="slip-input slip-input-center slip-input-inline hidden" style="width: 100px;" value="30/09/2026">
                                         </div>
                                     </div>
                                 </td>
@@ -731,7 +760,7 @@
                         </tbody>
                     </table>
 
-                    <!-- แถบชั่วโมงทำงาน อัตราค่าจ้าง และ ลายเซ็น (ใช้ Table แทน Grid เพื่อความเสถียรเวลาสร้าง PDF) -->
+                    <!-- แถบชั่วโมงทำงาน อัตราค่าจ้าง และ ลายเซ็น -->
                     <table style="width: 100%; border-collapse: collapse; border: none; margin-top: 4px;">
                         <tbody>
                             <tr>
@@ -1078,13 +1107,13 @@
         // ค่าคงที่ตามใบสลิป G4S และเงื่อนไขบริษัท
         const DEFAULT_WAGE_RATE = 47.50; // 47.50 บาท/ชม. (8 ชม. = 380 บาท/วัน)
         const OT_MULTIPLIER = 1.25;      // OT 4 ชม. = 47.50 * 1.25 * 4 = 237.50 บาท/วัน
-        const DEFAULT_FOOD_ALLOWANCE = 0.00; // ไม่ใส่ค่าเริ่มต้น อ้างอิงเฉพาะข้อมูลจริงจากเมนูรายงานเท่านั้น
+        const DEFAULT_FOOD_ALLOWANCE = 0.00;
         const LIFE_INSURANCE_FEE = 60.00;
         const LICENSE_TOTAL_QUOTA = 5000.00; // หักเดือนละ 500 จำนวน 10 งวด (ต.ค. 69 - ก.ค. 70)
         const UNIFORM_TOTAL_QUOTA = 2500.00; // หักเดือนละ 500 จำนวน 5 งวด (ส.ค. 70 - ธ.ค. 70)
         const MONTHLY_INSTALLMENT = 500.00;
 
-        // สร้างรายการรอบเดือน 36 เดือน (ก.ย. 2569 - ส.ค. 2572) อ้างอิงจากไฟล์ตาราง 36 เดือน
+        // สร้างรายการรอบเดือน 36 เดือน (ก.ย. 2569 - ส.ค. 2572)
         const THAI_MONTHS_SHORT = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
         const THAI_MONTHS_FULL = ['', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 
@@ -1101,14 +1130,13 @@
                 const thaiPrevY = (prevY + 543) % 100;
                 const label = `รอบ 16 ${THAI_MONTHS_SHORT[prevM]} ${thaiPrevY} - 15 ${THAI_MONTHS_SHORT[m]} ${thaiY} (${THAI_MONTHS_FULL[m]} ${y + 543})`;
                 
-                // ข้อมูลสำหรับแสดงบนหัวสลิป G4S
                 const periodSlash = `16/${String(prevM).padStart(2, '0')}/${prevY} - 15/${String(m).padStart(2, '0')}/${y}`;
                 const lastDayOfMonth = new Date(y, m, 0).getDate();
                 const payDateSlash = `${String(lastDayOfMonth).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
                 const periodNo = 249 + i; // งวดที่ 249 คือ ก.ย. 2026
 
                 cycles.push({
-                    index: i, // 0 = ก.ย. 69, 1 = ต.ค. 69 (เริ่มหักงวดที่ 1)
+                    index: i,
                     value: val,
                     label: label,
                     startDate: `${prevY}-${String(prevM).padStart(2, '0')}-16`,
@@ -1145,13 +1173,9 @@
             return ALL_CYCLES.find(c => c.value === cycleVal) || ALL_CYCLES[1];
         }
 
-        // คำนวณยอดหักค่าใบอนุญาต (5,000) และค่าชุด (2,500) ตามลำดับเดือน
-        // เริ่มหัก ตุลาคม 2569 (index = 1) เดือนละ 500 บาท
-        // งวดที่ 1 - 10 (ต.ค. 69 - ก.ค. 70): หักค่าใบอนุญาต รปภ. จนครบ 5,000 บาท
-        // งวดที่ 11 - 15 (ส.ค. 70 - ธ.ค. 70): หักค่าเครื่องแบบ จนครบ 2,500 บาท
         function calculateQuotaDeduction(cycleVal) {
             const meta = getCycleMeta(cycleVal);
-            const idx = meta.index; // 0 = ก.ย. 69, 1 = ต.ค. 69 ...
+            const idx = meta.index;
 
             let licenseDed = 0;
             let uniformDed = 0;
@@ -1735,7 +1759,6 @@
             return days[d.getDay()];
         }
 
-        // ประมวลผลข้อมูลเวลาทำงานของพนักงานในรอบเดือนที่เลือก
         function getAttendanceStatsForCycle(empId, cycleVal) {
             const meta = getCycleMeta(cycleVal);
             let currentD = new Date(meta.startDate);
@@ -1771,7 +1794,6 @@
                             totalHours += hrs;
                         }
                     } else if (record.status === 'OT') {
-                        // 7Day คิดเท่ากับวันทำงานปกติ แต่แยกไปลงช่อง วันหยุด (Weekly off) และ ค่าล่วงเวลาวันหยุด
                         if (hrs > 0) {
                             sevenDays++;
                             let bHrs = Math.min(8, hrs);
@@ -1881,12 +1903,10 @@
             'penalty', 'studentLoan', 'lifeIns', 'advExpress', 'lossDamage', 'lateAbsence', 'housingFee'
         ];
 
-        // ยอดยกมาเริ่มต้นก่อนรอบ ก.ย. 2569 (เพื่อให้รหัส A03306 ตรงกับใบสลิป PDF ต้นฉบับเป๊ะๆ)
         const INITIAL_CARRY_OVER = {
             'A03306': { income: 617.50, tax: 0.00, sso: 83.00 }
         };
 
-        // ฟังก์ชันคำนวณยอดรายได้ ภาษี และประกันสังคม ของแต่ละรอบเดือน (ใช้สำหรับบวกทบยอดสะสม)
         function getSingleCycleFinancials(empId, cycleVal) {
             const docId = `${empId}_${cycleVal}`;
             const savedSlip = window.allPayslips[docId];
@@ -1913,7 +1933,6 @@
             return { income: totalInc, tax: 0, sso: autoSso };
         }
 
-        // ฟังก์ชันคำนวณยอดสะสมแบบต่อเนื่องทุกเดือน (ตัวเลือก A: บวกทบตั้งแต่รอบก่อนหน้าทั้งหมดจนถึงรอบก่อนปัจจุบัน)
         function getPriorAccumulatedTotals(empId, targetCycleVal) {
             const meta = getCycleMeta(targetCycleVal);
             const carry = INITIAL_CARRY_OVER[empId] || { income: 0, tax: 0, sso: 0 };
@@ -1950,7 +1969,6 @@
             const stats = getAttendanceStatsForCycle(empId, cycleVal);
             const quota = calculateQuotaDeduction(cycleVal);
 
-            // อัปเดตแถบข้อมูลสถานะการหักค่าใบอนุญาตและค่าชุดด้านบนสลิป
             document.getElementById('infoInstallmentNo').textContent = quota.installmentNo > 0 ? quota.installmentNo : 'ยังไม่เริ่มหัก';
             document.getElementById('infoLicDed').textContent = formatMoney(quota.licenseDed, true);
             document.getElementById('infoLicAcc').textContent = formatMoney(quota.licenseAcc, true);
@@ -1962,24 +1980,17 @@
             document.getElementById('slip_deductionNote').textContent = 
                 `สรุปยอดหักสะสม (งวดที่ ${quota.installmentNo}/15): ใบอนุญาต รปภ. หักสะสม ${formatMoney(quota.licenseAcc, true)}/5,000 บ. (คงเหลือ ${formatMoney(quota.licenseRem, true)} บ.) | ค่าเครื่องแบบ หักสะสม ${formatMoney(quota.uniformAcc, true)}/2,500 บ. (คงเหลือ ${formatMoney(quota.uniformRem, true)} บ.)`;
 
-            // ข้อมูลพื้นฐานพนักงานบนสลิป
             document.getElementById('slip_periodText').textContent = meta.periodSlash;
             document.getElementById('slip_empId').textContent = empId;
             document.getElementById('slip_empName').textContent = window.allEmployees[empId] || empId;
 
-            // คำนวณตัวเลขอัตโนมัติจากรายงานเวลาทำงาน (อ้างอิงสลิป G4S 47.50 บาท/ชม.)
             const wageRate = DEFAULT_WAGE_RATE;
             const autoSalary = stats.workBaseHrs * wageRate;
             const autoOt = stats.workOtHrs * wageRate * OT_MULTIPLIER;
-            
-            // วันหยุด 7Day (สถานะ OT) คิดเรทเท่ากับวันทำงานปกติ แยกใส่ช่อง วันหยุด (Weekly off) และ ค่าล่วงเวลาวันหยุด
             const autoWeeklyOff = stats.sevenBaseHrs * wageRate;
             const autoWeeklyOffOt = stats.sevenOtHrs * wageRate * OT_MULTIPLIER;
+            const autoFood = DEFAULT_FOOD_ALLOWANCE;
 
-            // อ้างอิงเฉพาะข้อมูลจริงจากหน้ารายงานเท่านั้น (ไม่มีค่าอาหารอัตโนมัติ)
-            const autoFood = 0;
-
-            // ประกันสังคม 5% (คิดจากฐานค่าแรงปกติ + วันหยุด จากรายงานเวลาทำงานจริง, สูงสุดไม่เกิน 750)
             const ssoBase = autoSalary + autoWeeklyOff;
             const autoSso = Math.min(750, Math.round(ssoBase * 0.05));
 
@@ -1989,13 +2000,11 @@
 
             const autoTotalIncome = autoSalary + autoOt + autoWeeklyOff + autoWeeklyOffOt;
 
-            // คำนวณยอดสะสมยกมาจากเดือนก่อนหน้าทั้งหมด + ยอดของเดือนปัจจุบัน
             const priorAcc = getPriorAccumulatedTotals(empId, cycleVal);
             const autoYtdIncome = priorAcc.accIncome + autoTotalIncome;
             const autoYtdTax = priorAcc.accTax;
             const autoYtdSso = priorAcc.accSso + autoSso;
 
-            // ตรวจสอบว่ามีข้อมูลที่ Admin แก้ไขและบันทึกไว้ใน Cloud หรือไม่
             const docId = `${empId}_${cycleVal}`;
             const savedSlip = window.allPayslips[docId];
             const badgeOverride = document.getElementById('badgeCustomOverride');
@@ -2006,7 +2015,6 @@
                 badgeOverride.classList.add('hidden');
             }
 
-            // เตรียมอ็อบเจกต์ข้อมูลสำหรับแสดงผล
             const slipData = {
                 periodNo: savedSlip?.periodNo ?? String(meta.periodNo),
                 payDate: savedSlip?.payDate ?? meta.payDateSlash,
@@ -2060,7 +2068,6 @@
                 wageRate: savedSlip?.wageRate ?? wageRate
             };
 
-            // หยดข้อมูลลงช่อง View และ Input
             SLIP_TEXT_FIELDS.forEach(k => {
                 const vEl = document.getElementById(`view_${k}`);
                 const eEl = document.getElementById(`edit_${k}`);
@@ -2089,7 +2096,35 @@
             recalcSlipTotals(false);
         };
 
-        // คำนวณยอดรวมเงินได้ ยอดรวมเงินหัก ยอดสะสม และเงินได้สุทธิแบบ Real-time
+        window.onWageRateChange = function() {
+            const eWage = document.getElementById('edit_wageRate');
+            const vWage = document.getElementById('view_wageRate');
+            const newRate = parseFloat(eWage?.value) || 0;
+            if (vWage) vWage.textContent = newRate.toFixed(3);
+
+            const empId = isCurrentUserAdmin() ? document.getElementById('slipEmployeeSelect').value : currentUserRole;
+            const cycleVal = document.getElementById('slipCycleSelect').value;
+            if (empId && cycleVal && newRate > 0) {
+                const stats = getAttendanceStatsForCycle(empId, cycleVal);
+                const newSalary = stats.workBaseHrs * newRate;
+                const newOt = stats.workOtHrs * newRate * OT_MULTIPLIER;
+                const newWeeklyOff = stats.sevenBaseHrs * newRate;
+                const newWeeklyOffOt = stats.sevenOtHrs * newRate * OT_MULTIPLIER;
+                const newSso = Math.min(750, Math.round((newSalary + newWeeklyOff) * 0.05));
+
+                const setField = (key, amount) => {
+                    const el = document.getElementById(`edit_${key}`);
+                    if (el) el.value = amount > 0 ? amount.toFixed(2) : '';
+                };
+                setField('salary', newSalary);
+                setField('ot', newOt);
+                setField('weeklyOff', newWeeklyOff);
+                setField('weeklyOffOt', newWeeklyOffOt);
+                setField('sso', newSso);
+            }
+            window.recalcSlipTotals(true);
+        };
+
         window.recalcSlipTotals = function(updateYtdAuto = true) {
             let totalIncome = 0;
             INCOME_KEYS.forEach(k => {
@@ -2115,7 +2150,6 @@
             document.getElementById('slip_totalDeduction').textContent = formatMoney(totalDeduction, true);
             document.getElementById('slip_netIncome').textContent = formatMoney(netIncome, true);
 
-            // อัปเดตยอดสะสม (YTD) อัตโนมัติเมื่อมีการแก้ไขตัวเลขรายได้/ภาษี/ปกส. ในโหมดแก้ไข
             if (updateYtdAuto) {
                 const empId = isCurrentUserAdmin() ? document.getElementById('slipEmployeeSelect').value : currentUserRole;
                 const cycleVal = document.getElementById('slipCycleSelect').value;
@@ -2224,23 +2258,24 @@
             });
         };
 
-        // ฟังก์ชันช่วยแปลง Element เป็น PDF โดยโคลนออกมาวางนอก Scroll Container
-        // เพื่อแก้ปัญหาข้อความหาย/ซ้อนทับ/ถูกตัดขอบ บน iPad, iPhone (Safari) และทุกอุปกรณ์
-        async function exportElementToPdfClean(sourceEl, targetWidthPx, pdfOptions, btnEl, defaultBtnHtml) {
+        // ฟังก์ชันแปลง Element เป็น PDF แบบจัดเต็ม 1 หน้า A4 พอดี (ไม่มีข้อความหาย/เลื่อน/ตัดครึ่งหน้า บน iPad, iPhone และ PC)
+        async function exportElementToPdfClean(sourceEl, targetWidthPx, pdfConfig, btnEl, defaultBtnHtml) {
             if (btnEl) {
                 btnEl.innerHTML = '<span>⏳</span> กำลังสร้าง PDF...';
                 btnEl.disabled = true;
             }
 
-            // สร้างพื้นที่จำลองชั่วคราวที่ไม่ถูกจำกัดด้วย overflow-x-auto หรือตำแหน่ง Scroll
+            const savedScrollX = window.scrollX || window.pageXOffset || 0;
+            const savedScrollY = window.scrollY || window.pageYOffset || 0;
+
+            // สร้างฉากกั้นระหว่างเรนเดอร์เพื่อความเรียบร้อยของหน้าจอ
+            const overlayCurtain = document.createElement('div');
+            overlayCurtain.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+            overlayCurtain.innerHTML = '<div class="spinner mb-3"></div><p class="text-indigo-700 font-bold text-sm">กำลังจัดหน้าและสร้างไฟล์ PDF...</p>';
+
+            // วางกล่องต้นฉบับจำลองที่ตำแหน่ง (0, 0) บน Stacking Context ปกติ เพื่อไม่ให้ html2canvas ตัดขอบหรือซ่อนเลเยอร์
             const tempWrapper = document.createElement('div');
-            tempWrapper.style.position = 'fixed';
-            tempWrapper.style.top = '0';
-            tempWrapper.style.left = '0';
-            tempWrapper.style.width = targetWidthPx + 'px';
-            tempWrapper.style.zIndex = '-9999';
-            tempWrapper.style.backgroundColor = '#ffffff';
-            tempWrapper.style.overflow = 'visible';
+            tempWrapper.style.cssText = `position:absolute;top:0;left:0;width:${targetWidthPx}px;z-index:99990;background:#ffffff;overflow:visible;padding:0;margin:0;`;
 
             const cloneEl = sourceEl.cloneNode(true);
             cloneEl.style.margin = '0';
@@ -2248,35 +2283,65 @@
             cloneEl.style.minWidth = targetWidthPx + 'px';
             cloneEl.style.maxWidth = targetWidthPx + 'px';
             cloneEl.style.boxShadow = 'none';
+            cloneEl.style.borderRadius = '0';
 
-            // ลบช่อง input ที่ซ่อนอยู่ออกจาก Clone เพื่อไม่ให้ html2canvas คำนวณ Layout ผิดพลาด
+            if (pdfConfig.compactReport) {
+                cloneEl.classList.add('pdf-export-compact');
+            }
+
+            // ลบช่อง input หรือ element ที่ซ่อนอยู่ออกจาก Clone
             cloneEl.querySelectorAll('input.hidden, .hidden').forEach(el => el.remove());
 
             tempWrapper.appendChild(cloneEl);
+            document.body.appendChild(overlayCurtain);
             document.body.appendChild(tempWrapper);
 
             try {
+                window.scrollTo(0, 0);
+
                 if (document.fonts && document.fonts.ready) {
                     await document.fonts.ready;
                 }
-                // รอให้ Browser วาด Layout ของ Clone เสร็จสมบูรณ์
-                await new Promise(r => setTimeout(r, 150));
+                await new Promise(r => setTimeout(r, 200));
+
+                const isLandscape = pdfConfig.orientation === 'landscape';
+                const pageW = isLandscape ? 297 : 210;
+                const pageH = isLandscape ? 210 : 297;
+                const [mTop, mRight, mBottom, mLeft] = pdfConfig.margin;
+                const availW = pageW - mLeft - mRight;
+                const availH = pageH - mTop - mBottom;
+
+                const renderHeight = cloneEl.scrollHeight || cloneEl.offsetHeight;
+                const maxOnePageHeightPx = Math.floor(targetWidthPx * (availH / availW));
+
+                // หากความสูงของตารางเกิน 1 หน้าเล็กน้อย ให้ปรับสัดส่วนความกว้างจำลองเพื่อให้ html2pdf ย่อลงใน 1 หน้า A4 พอดี
+                let captureWidthPx = targetWidthPx;
+                if (renderHeight > maxOnePageHeightPx) {
+                    captureWidthPx = Math.ceil(renderHeight * (availW / availH)) + 8;
+                    tempWrapper.style.width = captureWidthPx + 'px';
+                    cloneEl.style.margin = '0 auto';
+                }
 
                 await html2pdf().set({
-                    ...pdfOptions,
+                    margin: pdfConfig.margin,
+                    filename: pdfConfig.filename,
+                    image: { type: 'jpeg', quality: 0.98 },
                     html2canvas: {
                         scale: 2,
                         useCORS: true,
                         logging: false,
                         backgroundColor: '#ffffff',
-                        width: targetWidthPx,
-                        windowWidth: targetWidthPx,
+                        width: captureWidthPx,
+                        windowWidth: captureWidthPx,
                         scrollX: 0,
-                        scrollY: 0,
-                        x: 0,
-                        y: 0
+                        scrollY: 0
+                    },
+                    jsPDF: {
+                        unit: 'mm',
+                        format: 'a4',
+                        orientation: pdfConfig.orientation
                     }
-                }).from(cloneEl).save();
+                }).from(tempWrapper).save();
             } catch (err) {
                 console.error("PDF Export Error:", err);
                 window.showCustomModal("เกิดข้อผิดพลาดในการสร้าง PDF กรุณาลองใหม่อีกครั้ง");
@@ -2284,6 +2349,10 @@
                 if (tempWrapper && tempWrapper.parentNode) {
                     tempWrapper.parentNode.removeChild(tempWrapper);
                 }
+                if (overlayCurtain && overlayCurtain.parentNode) {
+                    overlayCurtain.parentNode.removeChild(overlayCurtain);
+                }
+                window.scrollTo(savedScrollX, savedScrollY);
                 if (btnEl) {
                     btnEl.innerHTML = defaultBtnHtml;
                     btnEl.disabled = false;
@@ -2299,13 +2368,12 @@
             
             await exportElementToPdfClean(
                 element,
-                794, // ความกว้างมาตรฐาน A4 แนวตั้ง
+                794,
                 {
-                    margin: [10, 10, 10, 10], 
+                    margin: [8, 10, 8, 10],
                     filename: `Attendance_${empId}_${empName}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                    pagebreak: { mode: ['css', 'legacy'], avoid: 'tr' } 
+                    orientation: 'portrait',
+                    compactReport: true
                 },
                 btn,
                 '<span>📄</span> บันทึกเป็น PDF'
@@ -2325,12 +2393,12 @@
 
             await exportElementToPdfClean(
                 element,
-                1020, // ความกว้างมาตรฐานของใบสลิปแนวนอน
+                1020,
                 {
                     margin: [8, 6, 8, 6],
                     filename: `PaySlip_${empId}_${empName}_${cycleVal}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                    orientation: 'landscape',
+                    compactReport: false
                 },
                 btn,
                 '<span>🖨️</span> พิมพ์สลิป PDF'
