@@ -353,7 +353,7 @@
                     <h1 class="text-lg font-bold text-gray-800 flex items-center gap-2">
                         <span></span>สลิปเงินเดือน
                     </h1>
-                    <p id="slipSubStatus" class="text-xs text-gray-500 mt-0.5">(G4S CNX OUT 47.50 บ./ชม.)</p>
+                    <p id="slipSubStatus" class="text-xs text-gray-500 mt-0.5">(G4S CNX 47.50 บ./ชม.)</p>
                 </div>
 
                 <div class="flex flex-wrap gap-2 w-full lg:w-auto items-center">
@@ -361,7 +361,7 @@
                     <select id="slipCycleSelect" class="border rounded-lg px-3 py-2 text-sm dynamic-cycle-dropdown flex-1 sm:flex-initial" onchange="syncSelectors('slip')"></select>
                     
                     <!-- ปุ่มเฉพาะ Admin -->
-                    <button id="btnAdminEditSlip" onclick="toggleSlipEditMode()" class="hidden bg-amber-200 hover:bg-amber-600 text-white font-semibold px-3 py-2 rounded-lg text-sm shadow-sm transition-colors flex items-center gap-1.5 whitespace-nowrap">
+                    <button id="btnAdminEditSlip" onclick="toggleSlipEditMode()" class="hidden bg-amber-500 hover:bg-amber-600 text-white font-semibold px-3 py-2 rounded-lg text-sm shadow-sm transition-colors flex items-center gap-1.5 whitespace-nowrap">
                         <span>✏️</span> <span id="btnEditSlipText">แก้ไขตัวเลข</span>
                     </button>
                     <button id="btnAdminSaveSlip" onclick="saveSlipOverride()" class="hidden bg-emerald-200 hover:bg-emerald-700 text-white font-semibold px-3 py-2 rounded-lg text-sm shadow-sm transition-colors flex items-center gap-1.5 whitespace-nowrap">
@@ -371,7 +371,7 @@
                         🔄 คำนวณใหม่
                     </button>
 
-                    <button id="btnPrintSlipPdf" onclick="generateSlipPDF()" class="bg-indigo-200 hover:bg-indigo-800 text-white font-bold px-4 py-2 rounded-lg text-sm shadow flex items-center gap-1.5 whitespace-nowrap ml-auto sm:ml-0">
+                    <button id="btnPrintSlipPdf" onclick="generateSlipPDF()" class="bg-indigo-700 hover:bg-indigo-800 text-white font-bold px-4 py-2 rounded-lg text-sm shadow flex items-center gap-1.5 whitespace-nowrap ml-auto sm:ml-0">
                         <span>🖨️</span> พิมพ์สลิป PDF
                     </button>
                 </div>
