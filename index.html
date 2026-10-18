@@ -250,7 +250,7 @@
                         </button>
 
                         <button id="btnClockOut" onclick="initiateRealtimeClock('out')" class="group flex flex-col items-center justify-center gap-2 bg-rose-50 border-2 border-rose-200 hover:bg-rose-100 text-rose-800 py-6 rounded-2xl transition-all duration-200 active:scale-95 shadow-sm">
-                            <svg class="w-10 h-10 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                            <svg class="w-10 h-10 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                             <span class="font-bold text-base">ออกงาน</span>
                         </button>
                     </div>
@@ -1928,11 +1928,10 @@
             const empId = isCurrentUserAdmin() ? document.getElementById('employeeSelect').value : currentUserRole;
             await exportElementToPdfClean(document.getElementById('reportToPrint'), 794, { margin: [8, 10, 8, 10], filename: `Attendance_${empId}.pdf`, orientation: 'portrait', compactReport: true }, document.getElementById('btnPrintReportPdf'), '<span>📄</span> บันทึกเป็น PDF');
         };
-
-        // 🛠 FIX: ฟังก์ชันคำนวณและพิมพ์เฉพาะเมนู "สลิปเงินเดือน" แบบบังคับขนาด (แก้อาการหน้าขาวในอุปกรณ์บางชนิด)
+        
         window.generateSlipPDF = async function() {
             if(isSlipEditMode) exitSlipEditMode();
-            
+
             const btn = document.getElementById('btnPrintSlipPdf');
             const originalBtnHtml = btn.innerHTML;
             btn.innerHTML = '<span>⏳</span> กำลังสร้าง PDF...';
@@ -1942,47 +1941,64 @@
             const cycleVal = document.getElementById('slipCycleSelect').value;
             const element = document.getElementById('slipToPrint');
 
-            // สร้างร่างโคลนและบังคับไว้ที่พิกัด 0,0 เพื่อไม่ให้ Safari / iOS ตัดหน้าทิ้งเวลาจับภาพ
+            // 1. จำหน้าจอเดิมและเลื่อนขึ้นบนสุด ป้องกันบั๊ก iOS Safari จับภาพเพี้ยน
+            const originalScroll = window.scrollY;
+            window.scrollTo(0, 0);
+
+            // 2. สร้าง Overlay บังหน้าจอไว้ เพื่อไม่ให้ผู้ใช้เห็นตอนที่เราแอบวาดตาราง
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.95);z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+            overlay.innerHTML = '<div class="spinner mb-4"></div><p class="text-blue-600 font-bold">กำลังจัดเตรียมและสร้างไฟล์ PDF...</p>';
+            document.body.appendChild(overlay);
+
+            // 3. สร้าง Wrapper ซ้อนไว้หลัง Overlay (z-index เป็นบวก เพื่อให้ iOS ยอม Paint ลง Canvas)
+            const printWrapper = document.createElement('div');
+            printWrapper.style.cssText = 'position:absolute;top:0;left:0;width:1020px;background:#ffffff;z-index:999990;';
+
             const clone = element.cloneNode(true);
-            clone.style.position = 'absolute';
-            clone.style.top = '0';
-            clone.style.left = '0';
-            clone.style.width = '1020px'; 
-            clone.style.minWidth = '1020px';
-            clone.style.backgroundColor = '#ffffff';
-            clone.style.zIndex = '-9999';
             clone.style.margin = '0';
             clone.style.padding = '0';
             clone.style.boxShadow = 'none';
-            clone.querySelectorAll('input.hidden, .hidden').forEach(el => el.remove());
-            document.body.appendChild(clone);
+            clone.style.width = '1020px';
+            clone.style.minWidth = '1020px';
+            clone.style.backgroundColor = '#ffffff';
+            // ลบพวก input หรือปุ่มที่ซ่อนอยู่ออก
+            clone.querySelectorAll('input.hidden, .hidden, #badgeCustomOverride').forEach(el => el.remove());
+
+            printWrapper.appendChild(clone);
+            document.body.appendChild(printWrapper);
 
             const opt = {
                 margin: [8, 6, 8, 6],
                 filename: `PaySlip_${empId}_${cycleVal}.pdf`,
                 image: { type: 'jpeg', quality: 1.0 },
-                html2canvas: { 
-                    scale: 2, 
+                html2canvas: {
+                    scale: 2,
                     useCORS: true,
-                    scrollY: 0, 
+                    scrollY: 0,
                     scrollX: 0,
                     width: 1020,
-                    windowWidth: 1020
+                    windowWidth: 1020,
+                    backgroundColor: '#ffffff'
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
             };
 
             try {
                 if (document.fonts && document.fonts.ready) await document.fonts.ready;
-                await new Promise(r => setTimeout(r, 200));
-                
-                await html2pdf().set(opt).from(clone).save();
-            } catch(e) { 
-                window.showCustomModal("เกิดข้อผิดพลาดในการสร้าง PDF"); 
-            } finally { 
-                if(clone.parentNode) clone.remove(); 
-                btn.innerHTML = originalBtnHtml; 
-                btn.disabled = false; 
+                // หน่วงเวลาเล็กน้อยเพื่อให้ iOS Safari ดึง Layout ทั้งหมดให้เสร็จก่อน Capture
+                await new Promise(r => setTimeout(r, 600));
+
+                await html2pdf().set(opt).from(printWrapper).save();
+            } catch(e) {
+                console.error(e);
+                window.showCustomModal("เกิดข้อผิดพลาดในการสร้าง PDF");
+            } finally {
+                if(printWrapper.parentNode) printWrapper.remove();
+                if(overlay.parentNode) overlay.remove();
+                window.scrollTo(0, originalScroll);
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
             }
         };
     </script>
