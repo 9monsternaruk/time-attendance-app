@@ -1928,10 +1928,62 @@
             const empId = isCurrentUserAdmin() ? document.getElementById('employeeSelect').value : currentUserRole;
             await exportElementToPdfClean(document.getElementById('reportToPrint'), 794, { margin: [8, 10, 8, 10], filename: `Attendance_${empId}.pdf`, orientation: 'portrait', compactReport: true }, document.getElementById('btnPrintReportPdf'), '<span>📄</span> บันทึกเป็น PDF');
         };
+
+        // 🛠 FIX: ฟังก์ชันคำนวณและพิมพ์เฉพาะเมนู "สลิปเงินเดือน" แบบบังคับขนาด (แก้อาการหน้าขาวในอุปกรณ์บางชนิด)
         window.generateSlipPDF = async function() {
             if(isSlipEditMode) exitSlipEditMode();
+            
+            const btn = document.getElementById('btnPrintSlipPdf');
+            const originalBtnHtml = btn.innerHTML;
+            btn.innerHTML = '<span>⏳</span> กำลังสร้าง PDF...';
+            btn.disabled = true;
+
             const empId = isCurrentUserAdmin() ? document.getElementById('slipEmployeeSelect').value : currentUserRole;
-            await exportElementToPdfClean(document.getElementById('slipToPrint'), 1020, { margin: [8, 6, 8, 6], filename: `PaySlip_${empId}_${document.getElementById('slipCycleSelect').value}.pdf`, orientation: 'landscape', compactReport: false }, document.getElementById('btnPrintSlipPdf'), '<span>🖨️</span> พิมพ์สลิป PDF');
+            const cycleVal = document.getElementById('slipCycleSelect').value;
+            const element = document.getElementById('slipToPrint');
+
+            // สร้างร่างโคลนและบังคับไว้ที่พิกัด 0,0 เพื่อไม่ให้ Safari / iOS ตัดหน้าทิ้งเวลาจับภาพ
+            const clone = element.cloneNode(true);
+            clone.style.position = 'absolute';
+            clone.style.top = '0';
+            clone.style.left = '0';
+            clone.style.width = '1020px'; 
+            clone.style.minWidth = '1020px';
+            clone.style.backgroundColor = '#ffffff';
+            clone.style.zIndex = '-9999';
+            clone.style.margin = '0';
+            clone.style.padding = '0';
+            clone.style.boxShadow = 'none';
+            clone.querySelectorAll('input.hidden, .hidden').forEach(el => el.remove());
+            document.body.appendChild(clone);
+
+            const opt = {
+                margin: [8, 6, 8, 6],
+                filename: `PaySlip_${empId}_${cycleVal}.pdf`,
+                image: { type: 'jpeg', quality: 1.0 },
+                html2canvas: { 
+                    scale: 2, 
+                    useCORS: true,
+                    scrollY: 0, 
+                    scrollX: 0,
+                    width: 1020,
+                    windowWidth: 1020
+                },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            try {
+                if (document.fonts && document.fonts.ready) await document.fonts.ready;
+                await new Promise(r => setTimeout(r, 200));
+                
+                await html2pdf().set(opt).from(clone).save();
+            } catch(e) { 
+                window.showCustomModal("เกิดข้อผิดพลาดในการสร้าง PDF"); 
+            } finally { 
+                if(clone.parentNode) clone.remove(); 
+                btn.innerHTML = originalBtnHtml; 
+                btn.disabled = false; 
+            }
         };
     </script>
 </body>
