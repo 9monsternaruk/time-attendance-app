@@ -23,6 +23,34 @@
             body { background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } 
             .slip-wrapper-scroll { overflow: visible !important; background: transparent !important; padding: 0 !important; box-shadow: none !important; }
         }
+
+        /* แก้บั๊ก html2pdf.js สร้างหน้าขาวจาก opacity: 0 และตำแหน่งเลื่อน */
+        .html2pdf__overlay {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: auto !important;
+            bottom: auto !important;
+            width: auto !important;
+            height: auto !important;
+            overflow: visible !important;
+            opacity: 1 !important;
+            background: #ffffff !important;
+            z-index: 99990 !important;
+        }
+        .html2pdf__container {
+            position: relative !important;
+            display: block !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            left: 0 !important;
+            top: 0 !important;
+            box-shadow: none !important;
+            background: #ffffff !important;
+        }
+
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
@@ -57,13 +85,13 @@
 </head>
 <body class="p-2 sm:p-4 md:p-6 relative text-gray-800">
 
-    <div id="loadingOverlay" class="overlay-screen">
+    <div id="loadingOverlay" class="overlay-screen no-print" data-html2canvas-ignore="true">
         <div class="spinner mb-4"></div>
         <p class="text-blue-600 font-bold tracking-wide">กำลังเชื่อมต่อระบบ...</p>
     </div>
 
     <!-- Alert Modal -->
-    <div id="customModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 z-[100] hidden flex items-center justify-center backdrop-blur-sm">
+    <div id="customModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 z-[100] hidden flex items-center justify-center backdrop-blur-sm no-print" data-html2canvas-ignore="true">
         <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 transform transition-all border border-gray-100">
             <h3 id="modalMessage" class="text-[1.1rem] text-gray-800 text-center mb-6 mt-2 font-medium leading-snug">ข้อความ</h3>
             <div class="flex gap-3 justify-center">
@@ -74,7 +102,7 @@
     </div>
 
     <!-- Photo Viewer Modal (Floating Lightbox) -->
-    <div id="photoViewerModal" class="fixed inset-0 bg-black bg-opacity-80 z-[110] hidden flex items-center justify-center backdrop-blur-sm no-print">
+    <div id="photoViewerModal" class="fixed inset-0 bg-black bg-opacity-80 z-[110] hidden flex items-center justify-center backdrop-blur-sm no-print" data-html2canvas-ignore="true">
         <div class="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-lg w-full mx-4 flex flex-col max-h-[90vh]">
             <div class="bg-gray-50 border-b p-4 flex justify-between items-center">
                 <div>
@@ -108,7 +136,7 @@
         </div>
     </div>
 
-    <div id="loginOverlay" class="overlay-screen hidden" style="background: rgba(0,0,0,0.6);">
+    <div id="loginOverlay" class="overlay-screen hidden no-print" style="background: rgba(0,0,0,0.6);" data-html2canvas-ignore="true">
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 transform transition-all">
             <div class="text-center mb-8">
                 <div class="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-blue-100">
@@ -836,7 +864,7 @@
         </div>
     </div>
 
-    <div id="bottomNav" class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around items-center pb-safe pt-2 px-2 z-40 no-print shadow-[0_-2px_10px_rgba(0,0,0,0.05)] hidden">
+    <div id="bottomNav" class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around items-center pb-safe pt-2 px-2 z-40 no-print shadow-[0_-2px_10px_rgba(0,0,0,0.05)] hidden" data-html2canvas-ignore="true">
         <button onclick="switchTab('entry')" id="navEntry" class="flex flex-col items-center justify-center p-2 text-blue-600 hover:text-blue-700 w-full transition-colors rounded-lg">
             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <span class="text-[10px] sm:text-xs font-semibold">ลงเวลา</span>
@@ -1005,7 +1033,7 @@
 
         function buildCycleOptions() {
             const cycles = [];
-            let y = 2026, m = 9; // เริ่มที่ 16 ส.ค. - 15 ก.ย. (รอบก.ย.)
+            let y = 2026, m = 9;
             for (let i = 0; i < 36; i++) {
                 let prevM = m - 1; let prevY = y;
                 if (prevM === 0) { prevM = 12; prevY = y - 1; }
@@ -1055,7 +1083,7 @@
         }
 
         function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; // รัศมีโลกในหน่วยเมตร
+            const R = 6371e3;
             const dLat = (lat2-lat1) * (Math.PI/180);
             const dLon = (lon2-lon1) * (Math.PI/180);
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180)) * Math.cos(lat2*(Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2);
@@ -1072,7 +1100,7 @@
                     currentDistance = getDistanceFromLatLonInM(TARGET_LAT, TARGET_LON, currentLat, currentLon);
                 },
                 (err) => {
-                    currentDistance = Infinity; // บังคับให้เป็นอนันต์ถ้าหาพิกัดไม่ได้ (บังคับปิดปุ่มกลายๆ)
+                    currentDistance = Infinity;
                 },
                 { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
             );
@@ -1085,7 +1113,6 @@
             }
         }
 
-        // ฟังก์ชันประมวลผลรูปภาพพร้อมประทับตราวันที่และเวลา (Watermark)
         function compressImage(file, quality = 0.6, stampText = null) {
             return new Promise((resolve, reject) => {
                 if (!file) return reject("No file provided");
@@ -1108,18 +1135,15 @@
                         canvas.height = height;
                         ctx.drawImage(img, 0, 0, width, height);
 
-                        // ถ้ามีการส่งข้อความ Stamp มา ให้วาดลงบนรูป
                         if(stampText) {
                             const fontSize = Math.max(14, Math.floor(width * 0.035));
                             ctx.font = `bold ${fontSize}px "Sarabun", sans-serif`;
                             const textWidth = ctx.measureText(stampText).width;
                             const pad = fontSize * 0.6;
 
-                            // วาดกล่องพื้นหลังโปร่งแสงเพื่อให้เห็นตัวหนังสือชัดเจน
                             ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
                             ctx.fillRect(width - textWidth - (pad*2.5), height - fontSize - (pad*2.5), textWidth + (pad*2.5), fontSize + (pad*2.5));
 
-                            // วาดข้อความวันที่เวลา
                             ctx.fillStyle = "#ffffff";
                             ctx.textAlign = "right";
                             ctx.textBaseline = "bottom";
@@ -1356,10 +1380,7 @@
                 const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
                 const dateStrThai = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
                 
-                // สร้างข้อความ Timestamp
                 const watermarkText = `${dateStrThai} ${timeStr} น.`;
-                
-                // ส่งข้อความไปวาดลงบนรูป
                 const base64Image = await compressImage(file, 0.6, watermarkText);
                 
                 let targetDateISO = todayISO; 
@@ -1475,7 +1496,6 @@
             event.target.value = '';
             if(!file || !pendingAdminPhotoType) return;
             try {
-                // Admin อัปโหลดภาพ ไม่บังคับใส่ลายน้ำ
                 const base64 = await compressImage(file, 0.6);
                 const thumb = document.getElementById(pendingAdminPhotoType === 'in' ? 'adminThumbIn' : 'adminThumbOut');
                 const btn = document.getElementById(pendingAdminPhotoType === 'in' ? 'adminClearBtnIn' : 'adminClearBtnOut');
@@ -1670,7 +1690,6 @@
             window.showCustomModal('<div class="spinner mx-auto mb-2"></div> กำลังอัปโหลดรูปภาพย้อนหลัง/แก้ไข...');
 
             try {
-                // อัปโหลดไฟล์จากแกลลอรี่ ไม่ต้องบังคับประทับเวลา (เพราะส่วนใหญ่แอปกล้องในเครื่องมีให้แล้ว)
                 const base64Image = await compressImage(file, 0.6);
                 let existingRecord = window.allRecords.find(r => r.empId === currentUserRole && r.date === targetDateISO) || {};
 
@@ -1899,107 +1918,106 @@
 
         async function exportElementToPdfClean(sourceEl, targetWidthPx, pdfConfig, btnEl, defaultBtnHtml) {
             if(btnEl) { btnEl.innerHTML = '<span>⏳</span> กำลังสร้าง PDF...'; btnEl.disabled = true; }
-            const savedScrollY = window.scrollY; const overlayCurtain = document.createElement('div');
-            overlayCurtain.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+            const savedScrollY = window.scrollY;
+            const appContentEl = document.getElementById('appContent');
+
+            // 1. สร้างฉากบังหน้าจอพร้อมใส่ data-html2canvas-ignore="true" เพื่อไม่ให้ html2canvas จับภาพฉากสีขาวทับเนื้อหา
+            const overlayCurtain = document.createElement('div');
+            overlayCurtain.setAttribute('data-html2canvas-ignore', 'true');
+            overlayCurtain.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.96);z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
             overlayCurtain.innerHTML = '<div class="spinner mb-3"></div><p class="text-indigo-700 font-bold text-sm">กำลังจัดหน้าและสร้างไฟล์ PDF...</p>';
-            
-            const tempWrapper = document.createElement('div'); tempWrapper.style.cssText = `position:absolute;top:0;left:0;width:${targetWidthPx}px;z-index:99990;background:#ffffff;overflow:visible;padding:0;margin:0;`;
-            const cloneEl = sourceEl.cloneNode(true); cloneEl.style.cssText = `margin:0;width:${targetWidthPx}px;min-width:${targetWidthPx}px;max-width:${targetWidthPx}px;box-shadow:none;border-radius:0;`;
+            document.body.appendChild(overlayCurtain);
+
+            // 2. ใช้ position: relative (ห้ามใช้ position: absolute บน wrapper ที่ส่งเข้า html2pdf เพราะจะทำให้ .html2pdf__container มีความสูง 0px)
+            const tempWrapper = document.createElement('div');
+            tempWrapper.style.cssText = `position:relative;display:block;width:${targetWidthPx}px;background:#ffffff;overflow:visible;padding:0;margin:0;`;
+
+            const cloneEl = sourceEl.cloneNode(true);
+            cloneEl.style.cssText = `position:relative;display:block;margin:0;width:${targetWidthPx}px;min-width:${targetWidthPx}px;max-width:${targetWidthPx}px;box-shadow:none;border-radius:0;background:#ffffff;box-sizing:border-box;`;
             if (pdfConfig.compactReport) cloneEl.classList.add('pdf-export-compact');
-            cloneEl.querySelectorAll('input.hidden, .hidden').forEach(el => el.remove());
-            tempWrapper.appendChild(cloneEl); document.body.appendChild(overlayCurtain); document.body.appendChild(tempWrapper);
+
+            // ลบ element ที่ซ่อนอยู่และคอลัมน์ปุ่ม .no-print ออกก่อนสร้าง PDF
+            cloneEl.querySelectorAll('input.hidden, .hidden, .no-print, #badgeCustomOverride').forEach(el => el.remove());
+
+            tempWrapper.appendChild(cloneEl);
+            document.body.appendChild(tempWrapper);
 
             try {
-                window.scrollTo(0, 0); if (document.fonts && document.fonts.ready) await document.fonts.ready; await new Promise(r => setTimeout(r, 200));
+                window.scrollTo(0, 0);
+                if (document.fonts && document.fonts.ready) await document.fonts.ready;
+                await new Promise(r => setTimeout(r, 250));
+
                 let captureWidthPx = targetWidthPx;
-                const renderHeight = cloneEl.scrollHeight, maxOnePageHeightPx = Math.floor(targetWidthPx * ((pdfConfig.orientation === 'landscape' ? 210 : 297) - pdfConfig.margin[0] - pdfConfig.margin[2]) / ((pdfConfig.orientation === 'landscape' ? 297 : 210) - pdfConfig.margin[1] - pdfConfig.margin[3]));
-                if (renderHeight > maxOnePageHeightPx) { captureWidthPx = Math.ceil(renderHeight * ((pdfConfig.orientation === 'landscape' ? 297 : 210) / (pdfConfig.orientation === 'landscape' ? 210 : 297))) + 8; tempWrapper.style.width = captureWidthPx + 'px'; cloneEl.style.margin = '0 auto'; }
-                
+                const renderHeight = cloneEl.scrollHeight;
+                const maxOnePageHeightPx = Math.floor(
+                    targetWidthPx *
+                    ((pdfConfig.orientation === 'landscape' ? 210 : 297) - pdfConfig.margin[0] - pdfConfig.margin[2]) /
+                    ((pdfConfig.orientation === 'landscape' ? 297 : 210) - pdfConfig.margin[1] - pdfConfig.margin[3])
+                );
+
+                if (pdfConfig.compactReport && renderHeight > maxOnePageHeightPx) {
+                    captureWidthPx = Math.ceil(renderHeight * ((pdfConfig.orientation === 'landscape' ? 297 : 210) / (pdfConfig.orientation === 'landscape' ? 210 : 297))) + 8;
+                    tempWrapper.style.width = captureWidthPx + 'px';
+                    cloneEl.style.margin = '0 auto';
+                }
+
+                // ถอด tempWrapper ที่ใช้วัดขนาดออกจาก DOM และซ่อน #appContent ชั่วคราวจาก html2canvas
+                // เพื่อให้ html2pdf สร้าง .html2pdf__container เพียงชุดเดียวที่มุม (0,0) โดยไม่มีเลเยอร์อื่นรบกวน
+                if (tempWrapper.parentNode) tempWrapper.remove();
+                if (appContentEl) appContentEl.setAttribute('data-html2canvas-ignore', 'true');
+
                 await html2pdf().set({
-                    margin: pdfConfig.margin, filename: pdfConfig.filename, image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', width: captureWidthPx, windowWidth: captureWidthPx, scrollX: 0, scrollY: 0 },
+                    margin: pdfConfig.margin,
+                    filename: pdfConfig.filename,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        logging: false,
+                        backgroundColor: '#ffffff',
+                        width: captureWidthPx,
+                        windowWidth: captureWidthPx,
+                        x: 0,
+                        y: 0,
+                        scrollX: 0,
+                        scrollY: 0
+                    },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: pdfConfig.orientation }
                 }).from(tempWrapper).save();
-            } catch(e) { window.showCustomModal("เกิดข้อผิดพลาดในการสร้าง PDF"); }
-            finally { if(tempWrapper.parentNode) tempWrapper.remove(); if(overlayCurtain.parentNode) overlayCurtain.remove(); window.scrollTo(0, savedScrollY); if(btnEl) { btnEl.innerHTML = defaultBtnHtml; btnEl.disabled = false; } }
-        }
-
-        window.generatePDF = async function() {
-            const empId = isCurrentUserAdmin() ? document.getElementById('employeeSelect').value : currentUserRole;
-            await exportElementToPdfClean(document.getElementById('reportToPrint'), 794, { margin: [8, 10, 8, 10], filename: `Attendance_${empId}.pdf`, orientation: 'portrait', compactReport: true }, document.getElementById('btnPrintReportPdf'), '<span>📄</span> บันทึกเป็น PDF');
-        };
-        
-        window.generateSlipPDF = async function() {
-            if(isSlipEditMode) exitSlipEditMode();
-
-            const btn = document.getElementById('btnPrintSlipPdf');
-            const originalBtnHtml = btn.innerHTML;
-            btn.innerHTML = '<span>⏳</span> กำลังสร้าง PDF...';
-            btn.disabled = true;
-
-            const empId = isCurrentUserAdmin() ? document.getElementById('slipEmployeeSelect').value : currentUserRole;
-            const cycleVal = document.getElementById('slipCycleSelect').value;
-            const element = document.getElementById('slipToPrint');
-
-            // 1. จำหน้าจอเดิมและเลื่อนขึ้นบนสุด ป้องกันบั๊ก iOS Safari จับภาพเพี้ยน
-            const originalScroll = window.scrollY;
-            window.scrollTo(0, 0);
-
-            // 2. สร้าง Overlay บังหน้าจอไว้ เพื่อไม่ให้ผู้ใช้เห็นตอนที่เราแอบวาดตาราง
-            const overlay = document.createElement('div');
-            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.95);z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
-            overlay.innerHTML = '<div class="spinner mb-4"></div><p class="text-blue-600 font-bold">กำลังจัดเตรียมและสร้างไฟล์ PDF...</p>';
-            document.body.appendChild(overlay);
-
-            // 3. สร้าง Wrapper ซ้อนไว้หลัง Overlay (z-index เป็นบวก เพื่อให้ iOS ยอม Paint ลง Canvas)
-            const printWrapper = document.createElement('div');
-            printWrapper.style.cssText = 'position:absolute;top:0;left:0;width:1020px;background:#ffffff;z-index:999990;';
-
-            const clone = element.cloneNode(true);
-            clone.style.margin = '0';
-            clone.style.padding = '0';
-            clone.style.boxShadow = 'none';
-            clone.style.width = '1020px';
-            clone.style.minWidth = '1020px';
-            clone.style.backgroundColor = '#ffffff';
-            // ลบพวก input หรือปุ่มที่ซ่อนอยู่ออก
-            clone.querySelectorAll('input.hidden, .hidden, #badgeCustomOverride').forEach(el => el.remove());
-
-            printWrapper.appendChild(clone);
-            document.body.appendChild(printWrapper);
-
-            const opt = {
-                margin: [8, 6, 8, 6],
-                filename: `PaySlip_${empId}_${cycleVal}.pdf`,
-                image: { type: 'jpeg', quality: 1.0 },
-                html2canvas: {
-                    scale: 2,
-                    useCORS: true,
-                    scrollY: 0,
-                    scrollX: 0,
-                    width: 1020,
-                    windowWidth: 1020,
-                    backgroundColor: '#ffffff'
-                },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-            };
-
-            try {
-                if (document.fonts && document.fonts.ready) await document.fonts.ready;
-                // หน่วงเวลาเล็กน้อยเพื่อให้ iOS Safari ดึง Layout ทั้งหมดให้เสร็จก่อน Capture
-                await new Promise(r => setTimeout(r, 600));
-
-                await html2pdf().set(opt).from(printWrapper).save();
             } catch(e) {
                 console.error(e);
                 window.showCustomModal("เกิดข้อผิดพลาดในการสร้าง PDF");
             } finally {
-                if(printWrapper.parentNode) printWrapper.remove();
-                if(overlay.parentNode) overlay.remove();
-                window.scrollTo(0, originalScroll);
-                btn.innerHTML = originalBtnHtml;
-                btn.disabled = false;
+                if (appContentEl) appContentEl.removeAttribute('data-html2canvas-ignore');
+                if (tempWrapper.parentNode) tempWrapper.remove();
+                if (overlayCurtain.parentNode) overlayCurtain.remove();
+                window.scrollTo(0, savedScrollY);
+                if (btnEl) { btnEl.innerHTML = defaultBtnHtml; btnEl.disabled = false; }
             }
+        }
+
+        window.generatePDF = async function() {
+            const empId = isCurrentUserAdmin() ? document.getElementById('employeeSelect').value : currentUserRole;
+            await exportElementToPdfClean(
+                document.getElementById('reportToPrint'),
+                794,
+                { margin: [8, 10, 8, 10], filename: `Attendance_${empId}.pdf`, orientation: 'portrait', compactReport: true },
+                document.getElementById('btnPrintReportPdf'),
+                '<span>📄</span> บันทึกเป็น PDF'
+            );
+        };
+        
+        window.generateSlipPDF = async function() {
+            if(isSlipEditMode) exitSlipEditMode();
+            const empId = isCurrentUserAdmin() ? document.getElementById('slipEmployeeSelect').value : currentUserRole;
+            const cycleVal = document.getElementById('slipCycleSelect').value;
+            await exportElementToPdfClean(
+                document.getElementById('slipToPrint'),
+                1020,
+                { margin: [8, 6, 8, 6], filename: `PaySlip_${empId}_${cycleVal}.pdf`, orientation: 'landscape', compactReport: false },
+                document.getElementById('btnPrintSlipPdf'),
+                '<span>🖨️</span> พิมพ์สลิป PDF'
+            );
         };
     </script>
 </body>
