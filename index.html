@@ -23,34 +23,6 @@
             body { background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } 
             .slip-wrapper-scroll { overflow: visible !important; background: transparent !important; padding: 0 !important; box-shadow: none !important; }
         }
-
-        /* แก้บั๊ก html2pdf.js สร้างหน้าขาวจาก opacity: 0 และตำแหน่งเลื่อน */
-        .html2pdf__overlay {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: auto !important;
-            bottom: auto !important;
-            width: auto !important;
-            height: auto !important;
-            overflow: visible !important;
-            opacity: 1 !important;
-            background: #ffffff !important;
-            z-index: 99990 !important;
-        }
-        .html2pdf__container {
-            position: relative !important;
-            display: block !important;
-            width: auto !important;
-            height: auto !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            left: 0 !important;
-            top: 0 !important;
-            box-shadow: none !important;
-            background: #ffffff !important;
-        }
-
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
@@ -85,13 +57,13 @@
 </head>
 <body class="p-2 sm:p-4 md:p-6 relative text-gray-800">
 
-    <div id="loadingOverlay" class="overlay-screen no-print" data-html2canvas-ignore="true">
+    <div id="loadingOverlay" class="overlay-screen">
         <div class="spinner mb-4"></div>
         <p class="text-blue-600 font-bold tracking-wide">กำลังเชื่อมต่อระบบ...</p>
     </div>
 
     <!-- Alert Modal -->
-    <div id="customModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 z-[100] hidden flex items-center justify-center backdrop-blur-sm no-print" data-html2canvas-ignore="true">
+    <div id="customModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 z-[100] hidden flex items-center justify-center backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 transform transition-all border border-gray-100">
             <h3 id="modalMessage" class="text-[1.1rem] text-gray-800 text-center mb-6 mt-2 font-medium leading-snug">ข้อความ</h3>
             <div class="flex gap-3 justify-center">
@@ -102,7 +74,7 @@
     </div>
 
     <!-- Photo Viewer Modal (Floating Lightbox) -->
-    <div id="photoViewerModal" class="fixed inset-0 bg-black bg-opacity-80 z-[110] hidden flex items-center justify-center backdrop-blur-sm no-print" data-html2canvas-ignore="true">
+    <div id="photoViewerModal" class="fixed inset-0 bg-black bg-opacity-80 z-[110] hidden flex items-center justify-center backdrop-blur-sm no-print">
         <div class="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-lg w-full mx-4 flex flex-col max-h-[90vh]">
             <div class="bg-gray-50 border-b p-4 flex justify-between items-center">
                 <div>
@@ -136,7 +108,7 @@
         </div>
     </div>
 
-    <div id="loginOverlay" class="overlay-screen hidden no-print" style="background: rgba(0,0,0,0.6);" data-html2canvas-ignore="true">
+    <div id="loginOverlay" class="overlay-screen hidden" style="background: rgba(0,0,0,0.6);">
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 transform transition-all">
             <div class="text-center mb-8">
                 <div class="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-blue-100">
@@ -212,10 +184,11 @@
                             <select id="inputStatus" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 focus:border-blue-500 outline-none" onchange="toggleTimeInputs()">
                                 <option value="work">มาทำงาน (ปกติ)</option>
                                 <option value="OT">7Day (ทำวันหยุด)</option>
+                                <option value="holiday_work">ทำงาน (นักขัตฤกษ์)</option>
                                 <option value="leave_sick">ลาป่วย</option>
                                 <option value="leave_personal">ลากิจ</option>
                                 <option value="leave_vacation">ลาพักร้อน</option>
-                                <option value="holiday">วันหยุด</option>
+                                <option value="holiday">วันหยุดพักผ่อน</option>
                                 <option value="absent">ขาดงาน</option>
                                 <option value="reset">รีเซ็ต (ล้างข้อมูล)</option>
                             </select>
@@ -334,19 +307,19 @@
                     <h3 class="font-bold text-center border-b border-gray-300 pb-1.5 mb-2.5">สรุปผลการปฏิบัติงานประจำรอบ (Payroll Summary)</h3>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center max-w-2xl mx-auto">
                         <div class="bg-white p-2 border rounded shadow-sm">
-                            <p class="text-xs text-gray-500 font-semibold">วันทำงานปกติ</p>
+                            <p class="text-xs text-gray-500 font-semibold mb-1">วันทำงานปกติ</p>
                             <p class="font-bold text-lg text-blue-700"><span id="sumWorkDays">0</span> วัน</p>
                         </div>
                         <div class="bg-white p-2 border rounded shadow-sm">
-                            <p class="text-xs text-gray-500 font-semibold">วันทำงาน 7Day</p>
+                            <p class="text-[11px] text-gray-500 font-semibold leading-tight mb-1">วันทำงาน<br>7Day / นักขัตฤกษ์</p>
                             <p class="font-bold text-lg text-indigo-700"><span id="sum7Days">0</span> วัน</p>
                         </div>
                         <div class="bg-white p-2 border rounded shadow-sm">
-                            <p class="text-xs text-gray-500 font-semibold">รวมชั่วโมงทั้งหมด</p>
+                            <p class="text-xs text-gray-500 font-semibold mb-1">รวมชั่วโมงทั้งหมด</p>
                             <p class="font-bold text-lg text-emerald-700"><span id="sumTotalHours">0.0</span> ชม.</p>
                         </div>
                         <div class="bg-white p-2 border border-red-200 rounded shadow-sm">
-                            <p class="text-xs text-red-500 font-semibold">วันลา / วันหยุด</p>
+                            <p class="text-xs text-red-500 font-semibold mb-1">วันลา / วันหยุด</p>
                             <p class="font-bold text-lg text-red-600"><span id="sumLeaveDays">0</span> วัน</p>
                         </div>
                     </div>
@@ -864,7 +837,7 @@
         </div>
     </div>
 
-    <div id="bottomNav" class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around items-center pb-safe pt-2 px-2 z-40 no-print shadow-[0_-2px_10px_rgba(0,0,0,0.05)] hidden" data-html2canvas-ignore="true">
+    <div id="bottomNav" class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around items-center pb-safe pt-2 px-2 z-40 no-print shadow-[0_-2px_10px_rgba(0,0,0,0.05)] hidden">
         <button onclick="switchTab('entry')" id="navEntry" class="flex flex-col items-center justify-center p-2 text-blue-600 hover:text-blue-700 w-full transition-colors rounded-lg">
             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <span class="text-[10px] sm:text-xs font-semibold">ลงเวลา</span>
@@ -1031,9 +1004,11 @@
         const THAI_MONTHS_SHORT = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
         const THAI_MONTHS_FULL = ['', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 
+        const STATUS_LABELS = { 'work':'ทำงาน', 'OT':'7Day', 'holiday_work':'นักขัตฤกษ์', 'leave_sick':'ลาป่วย', 'leave_personal':'ลากิจ', 'leave_vacation':'พักร้อน', 'holiday':'วันหยุดพักผ่อน', 'absent':'ขาดงาน', 'reset':'รีเซ็ต' };
+
         function buildCycleOptions() {
             const cycles = [];
-            let y = 2026, m = 9;
+            let y = 2026, m = 9; // เริ่มที่ 16 ส.ค. - 15 ก.ย. (รอบก.ย.)
             for (let i = 0; i < 36; i++) {
                 let prevM = m - 1; let prevY = y;
                 if (prevM === 0) { prevM = 12; prevY = y - 1; }
@@ -1083,7 +1058,7 @@
         }
 
         function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
-            const R = 6371e3;
+            const R = 6371e3; // รัศมีโลกในหน่วยเมตร
             const dLat = (lat2-lat1) * (Math.PI/180);
             const dLon = (lon2-lon1) * (Math.PI/180);
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180)) * Math.cos(lat2*(Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2);
@@ -1100,7 +1075,7 @@
                     currentDistance = getDistanceFromLatLonInM(TARGET_LAT, TARGET_LON, currentLat, currentLon);
                 },
                 (err) => {
-                    currentDistance = Infinity;
+                    currentDistance = Infinity; // บังคับให้เป็นอนันต์ถ้าหาพิกัดไม่ได้ (บังคับปิดปุ่มกลายๆ)
                 },
                 { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
             );
@@ -1113,6 +1088,7 @@
             }
         }
 
+        // ฟังก์ชันประมวลผลรูปภาพพร้อมประทับตราวันที่และเวลา (Watermark)
         function compressImage(file, quality = 0.6, stampText = null) {
             return new Promise((resolve, reject) => {
                 if (!file) return reject("No file provided");
@@ -1135,15 +1111,18 @@
                         canvas.height = height;
                         ctx.drawImage(img, 0, 0, width, height);
 
+                        // ถ้ามีการส่งข้อความ Stamp มา ให้วาดลงบนรูป
                         if(stampText) {
                             const fontSize = Math.max(14, Math.floor(width * 0.035));
                             ctx.font = `bold ${fontSize}px "Sarabun", sans-serif`;
                             const textWidth = ctx.measureText(stampText).width;
                             const pad = fontSize * 0.6;
 
+                            // วาดกล่องพื้นหลังโปร่งแสงเพื่อให้เห็นตัวหนังสือชัดเจน
                             ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
                             ctx.fillRect(width - textWidth - (pad*2.5), height - fontSize - (pad*2.5), textWidth + (pad*2.5), fontSize + (pad*2.5));
 
+                            // วาดข้อความวันที่เวลา
                             ctx.fillStyle = "#ffffff";
                             ctx.textAlign = "right";
                             ctx.textBaseline = "bottom";
@@ -1243,9 +1222,6 @@
             document.getElementById('bottomNav').classList.remove('hidden');
             setupRoleView();
         }
-
-        let clockInterval;
-        const STATUS_LABELS = { 'work':'ทำงาน', 'OT':'7Day', 'leave_sick':'ลาป่วย', 'leave_personal':'ลากิจ', 'leave_vacation':'พักร้อน', 'holiday':'วันหยุด', 'absent':'ขาดงาน', 'reset':'รีเซ็ต' };
 
         function updateEmployeeDropdowns() {
             const empSelects = document.querySelectorAll('.dynamic-emp-dropdown');
@@ -1380,7 +1356,10 @@
                 const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
                 const dateStrThai = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
                 
+                // สร้างข้อความ Timestamp
                 const watermarkText = `${dateStrThai} ${timeStr} น.`;
+                
+                // ส่งข้อความไปวาดลงบนรูป
                 const base64Image = await compressImage(file, 0.6, watermarkText);
                 
                 let targetDateISO = todayISO; 
@@ -1395,7 +1374,8 @@
 
                 let recordToSave = {
                     empId: currentUserRole, name: window.allEmployees[currentUserRole],
-                    date: targetDateISO, status: existingRecord.status === 'OT' ? 'OT' : 'work',
+                    date: targetDateISO, 
+                    status: ['OT', 'holiday_work'].includes(existingRecord.status) ? existingRecord.status : 'work',
                     note: existingRecord.note || '' 
                 };
 
@@ -1474,7 +1454,7 @@
 
         function toggleTimeInputs() {
             const s = document.getElementById('inputStatus').value;
-            const isWork = s === 'work' || s === 'OT';
+            const isWork = s === 'work' || s === 'OT' || s === 'holiday_work';
             document.querySelectorAll('.time-input').forEach(input => {
                 input.disabled = !isWork;
                 if(!isWork) { input.value = ''; input.classList.replace('bg-emerald-50', 'bg-gray-100'); input.classList.replace('bg-rose-50', 'bg-gray-100'); }
@@ -1496,6 +1476,7 @@
             event.target.value = '';
             if(!file || !pendingAdminPhotoType) return;
             try {
+                // Admin อัปโหลดภาพ ไม่บังคับใส่ลายน้ำ
                 const base64 = await compressImage(file, 0.6);
                 const thumb = document.getElementById(pendingAdminPhotoType === 'in' ? 'adminThumbIn' : 'adminThumbOut');
                 const btn = document.getElementById(pendingAdminPhotoType === 'in' ? 'adminClearBtnIn' : 'adminClearBtnOut');
@@ -1538,7 +1519,7 @@
             const empId = document.getElementById('inputEmp').value;
             const status = document.getElementById('inputStatus').value;
             const btn = document.getElementById('btnAdminSave');
-            const isWorkStatus = status === 'work' || status === 'OT';
+            const isWorkStatus = status === 'work' || status === 'OT' || status === 'holiday_work';
 
             const recordToSave = {
                 empId: empId, name: window.allEmployees[empId], date: document.getElementById('inputDate').value,
@@ -1556,7 +1537,7 @@
             const success = await window.saveRecordToCloud(recordToSave);
             btn.textContent = "บันทึกข้อมูลลงระบบ"; btn.disabled = false;
 
-            if(success) window.showCustomModal(status === 'reset' ? "ล้างข้อมูลเรียบร้อยแล้ว" : "บันทึกข้อมูลเรียบร้อยแล้ว");
+            if(success) window.showCustomModal(status === 'reset' ? "ล้างข้อมูลเรียบร้อยแล้ว" : "บันึกข้อมูลเรียบร้อยแล้ว");
         }
 
         function getThaiDay(dateStr) { const days = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.']; return days[new Date(dateStr).getDay()]; }
@@ -1575,17 +1556,19 @@
             let currentD = new Date(meta.startDate), endD = new Date(meta.endDate), dateArray = [];
             while(currentD <= endD) { dateArray.push(currentD.toISOString().split('T')[0]); currentD.setDate(currentD.getDate() + 1); }
 
-            let workDays=0, workBaseHrs=0, workOtHrs=0, sevenDays=0, sevenBaseHrs=0, sevenOtHrs=0, leaveDays=0, totalHours=0;
+            let workDays=0, workBaseHrs=0, workOtHrs=0, sevenDays=0, sevenBaseHrs=0, sevenOtHrs=0, holWorkDays=0, holBaseHrs=0, holOtHrs=0, leaveDays=0, totalHours=0;
+            
             dateArray.forEach(dStr => {
                 let r = window.allRecords.find(rec => rec.empId === empId && rec.date === dStr);
                 if (r && r.status !== 'reset') {
                     let hrs = calculateHours(r.in, r.out);
                     if (r.status === 'work') { if(hrs>0){ workDays++; workBaseHrs+=Math.min(8,hrs); workOtHrs+=Math.max(0,hrs-8); totalHours+=hrs; } }
                     else if (r.status === 'OT') { if(hrs>0){ sevenDays++; sevenBaseHrs+=Math.min(8,hrs); sevenOtHrs+=Math.max(0,hrs-8); totalHours+=hrs; } }
+                    else if (r.status === 'holiday_work') { if(hrs>0){ holWorkDays++; holBaseHrs+=Math.min(8,hrs); holOtHrs+=Math.max(0,hrs-8); totalHours+=hrs; } }
                     else if (r.status !== 'absent') { leaveDays++; }
                 }
             });
-            return { dateArray, workDays, workBaseHrs, workOtHrs, sevenDays, sevenBaseHrs, sevenOtHrs, leaveDays, totalHours };
+            return { dateArray, workDays, workBaseHrs, workOtHrs, sevenDays, sevenBaseHrs, sevenOtHrs, holWorkDays, holBaseHrs, holOtHrs, leaveDays, totalHours };
         }
 
         window.renderReport = function() {
@@ -1623,7 +1606,7 @@
                     
                     let photoBtn = `<button onclick="openPhotoViewer('${empId}', ${safeDate})" class="bg-blue-50 text-blue-600 hover:bg-blue-100 p-1.5 rounded-lg transition-colors border border-blue-200 text-xs font-semibold shadow-sm w-full flex items-center justify-center gap-1"><span class="text-base">${hasPhoto ? '🖼️' : '📎'}</span> ${hasPhoto ? 'ดูรูป' : 'แนบรูป'}</button>`;
 
-                    tbody.innerHTML += `<tr class="border-b ${r.status!=='work'&&r.status!=='OT' ? 'bg-orange-50' : (r.status==='OT'?'bg-indigo-50':'')}">
+                    tbody.innerHTML += `<tr class="border-b ${r.status!=='work'&&r.status!=='OT'&&r.status!=='holiday_work' ? 'bg-orange-50' : (r.status==='OT'?'bg-indigo-50': (r.status==='holiday_work'?'bg-purple-50':''))}">
                         <td class="border border-gray-400">${dateDisplay}</td>
                         <td class="border border-gray-400 font-medium ${r.in !== '-' ? 'text-emerald-700' : ''}">${r.in || '-'}</td>
                         <td class="border border-gray-400 font-medium ${r.out !== '-' ? 'text-rose-700' : ''}">${r.out || '-'}</td>
@@ -1635,7 +1618,8 @@
                 }
             });
 
-            document.getElementById('sumWorkDays').textContent = stats.workDays; document.getElementById('sum7Days').textContent = stats.sevenDays;
+            document.getElementById('sumWorkDays').textContent = stats.workDays; 
+            document.getElementById('sum7Days').textContent = stats.sevenDays + stats.holWorkDays;
             document.getElementById('sumTotalHours').textContent = stats.totalHours.toFixed(1); document.getElementById('sumLeaveDays').textContent = stats.leaveDays;
         };
 
@@ -1690,6 +1674,7 @@
             window.showCustomModal('<div class="spinner mx-auto mb-2"></div> กำลังอัปโหลดรูปภาพย้อนหลัง/แก้ไข...');
 
             try {
+                // อัปโหลดไฟล์จากแกลลอรี่ ไม่ต้องบังคับประทับเวลา (เพราะส่วนใหญ่แอปกล้องในเครื่องมีให้แล้ว)
                 const base64Image = await compressImage(file, 0.6);
                 let existingRecord = window.allRecords.find(r => r.empId === currentUserRole && r.date === targetDateISO) || {};
 
@@ -1751,8 +1736,13 @@
             }
             const stats = getAttendanceStatsForCycle(empId, cycleVal);
             const wRate = DEFAULT_WAGE_RATE;
-            const tInc = (stats.workBaseHrs * wRate) + (stats.workOtHrs * wRate * OT_MULTIPLIER) + (stats.sevenBaseHrs * wRate) + (stats.sevenOtHrs * wRate * OT_MULTIPLIER);
-            const autoSso = Math.min(750, Math.round(((stats.workBaseHrs * wRate) + (stats.sevenBaseHrs * wRate)) * 0.05));
+            const baseIncome = (stats.workBaseHrs * wRate) + (stats.workOtHrs * wRate * OT_MULTIPLIER);
+            const sevenIncome = (stats.sevenBaseHrs * wRate * 2.0) + (stats.sevenOtHrs * wRate * 2.5);
+            const holIncome = (stats.holBaseHrs * wRate * 2.0) + (stats.holOtHrs * wRate * 2.5);
+            const tInc = baseIncome + sevenIncome + holIncome;
+            
+            const ssoBaseHrs = stats.workBaseHrs + stats.sevenBaseHrs + stats.holBaseHrs;
+            const autoSso = Math.min(750, Math.round((ssoBaseHrs * wRate) * 0.05));
             return { income: tInc, tax: 0, sso: autoSso };
         }
 
@@ -1785,17 +1775,33 @@
             document.getElementById('slip_empId').textContent = empId; document.getElementById('slip_empName').textContent = window.allEmployees[empId] || empId;
 
             const wRate = DEFAULT_WAGE_RATE;
-            const autoSso = Math.min(750, Math.round(((stats.workBaseHrs * wRate) + (stats.sevenBaseHrs * wRate)) * 0.05));
+            const ssoBaseHrs = stats.workBaseHrs + stats.sevenBaseHrs + stats.holBaseHrs;
+            const autoSso = Math.min(750, Math.round((ssoBaseHrs * wRate) * 0.05));
             const priorAcc = getPriorAccumulatedTotals(empId, cycleVal);
             
             const docId = `${empId}_${cycleVal}`; const savedSlip = window.allPayslips[docId];
             document.getElementById('badgeCustomOverride').classList[savedSlip ? 'remove' : 'add']('hidden');
 
+            const calculatedYtdIncome = priorAcc.accIncome + 
+                (stats.workBaseHrs * wRate) + (stats.workOtHrs * wRate * OT_MULTIPLIER) + 
+                (stats.sevenBaseHrs * wRate * 2.0) + (stats.sevenOtHrs * wRate * 2.5) + 
+                (stats.holBaseHrs * wRate * 2.0) + (stats.holOtHrs * wRate * 2.5);
+
             const slipData = {
                 periodNo: savedSlip?.periodNo ?? String(meta.periodNo), payDate: savedSlip?.payDate ?? meta.payDateSlash, empType: savedSlip?.empType ?? 'Direct Staff', zone: savedSlip?.zone ?? 'Northern', dept: savedSlip?.dept ?? 'ปฏิบัติการ', bankName: savedSlip?.bankName ?? 'Kasikornbank Public Company Ltd.', bankAcc: savedSlip?.bankAcc ?? (window.allBankAccs[empId] || '00404572163615'),
-                salary: savedSlip?.salary ?? (stats.workBaseHrs * wRate), ot: savedSlip?.ot ?? (stats.workOtHrs * wRate * OT_MULTIPLIER), holidayWage: savedSlip?.holidayWage ?? 0, holidayOt: savedSlip?.holidayOt ?? 0, weeklyOff: savedSlip?.weeklyOff ?? (stats.sevenBaseHrs * wRate), weeklyOffOt: savedSlip?.weeklyOffOt ?? (stats.sevenOtHrs * wRate * OT_MULTIPLIER), langTel: savedSlip?.langTel ?? 0, housingA: savedSlip?.housingA ?? 0, positionA: savedSlip?.positionA ?? 0, incentive: savedSlip?.incentive ?? 0, spA: savedSlip?.spA ?? 0, accrued: savedSlip?.accrued ?? 0, transport: savedSlip?.transport ?? 0, otherIncome: savedSlip?.otherIncome ?? 0, bonus: savedSlip?.bonus ?? 0, maternity: savedSlip?.maternity ?? 0, personalLeave: savedSlip?.personalLeave ?? 0, vacationLeave: savedSlip?.vacationLeave ?? 0, shiftA: savedSlip?.shiftA ?? 0, sickLeave: savedSlip?.sickLeave ?? 0, food: savedSlip?.food ?? DEFAULT_FOOD_ALLOWANCE,
+                salary: savedSlip?.salary ?? (stats.workBaseHrs * wRate), 
+                ot: savedSlip?.ot ?? (stats.workOtHrs * wRate * OT_MULTIPLIER), 
+                holidayWage: savedSlip?.holidayWage ?? (stats.holBaseHrs * wRate * 2.0), 
+                holidayOt: savedSlip?.holidayOt ?? (stats.holOtHrs * wRate * 2.5), 
+                weeklyOff: savedSlip?.weeklyOff ?? (stats.sevenBaseHrs * wRate * 2.0), 
+                weeklyOffOt: savedSlip?.weeklyOffOt ?? (stats.sevenOtHrs * wRate * 2.5), 
+                langTel: savedSlip?.langTel ?? 0, housingA: savedSlip?.housingA ?? 0, positionA: savedSlip?.positionA ?? 0, incentive: savedSlip?.incentive ?? 0, spA: savedSlip?.spA ?? 0, accrued: savedSlip?.accrued ?? 0, transport: savedSlip?.transport ?? 0, otherIncome: savedSlip?.otherIncome ?? 0, bonus: savedSlip?.bonus ?? 0, maternity: savedSlip?.maternity ?? 0, personalLeave: savedSlip?.personalLeave ?? 0, vacationLeave: savedSlip?.vacationLeave ?? 0, shiftA: savedSlip?.shiftA ?? 0, sickLeave: savedSlip?.sickLeave ?? 0, food: savedSlip?.food ?? DEFAULT_FOOD_ALLOWANCE,
                 tax: savedSlip?.tax ?? 0, sso: savedSlip?.sso ?? autoSso, advance: savedSlip?.advance ?? 0, uniform: savedSlip?.uniform ?? quota.uniformDed, accessory: savedSlip?.accessory ?? 0, license: savedSlip?.license ?? quota.licenseDed, otherDed: savedSlip?.otherDed ?? 0, penalty: savedSlip?.penalty ?? 0, studentLoan: savedSlip?.studentLoan ?? 0, lifeIns: savedSlip?.lifeIns ?? LIFE_INSURANCE_FEE, advExpress: savedSlip?.advExpress ?? 0, lossDamage: savedSlip?.lossDamage ?? 0, lateAbsence: savedSlip?.lateAbsence ?? 0, housingFee: savedSlip?.housingFee ?? 0,
-                ytdIncome: savedSlip?.ytdIncome ?? (priorAcc.accIncome + (stats.workBaseHrs * wRate) + (stats.workOtHrs * wRate * OT_MULTIPLIER) + (stats.sevenBaseHrs * wRate) + (stats.sevenOtHrs * wRate * OT_MULTIPLIER)), ytdTax: savedSlip?.ytdTax ?? priorAcc.accTax, ytdSso: savedSlip?.ytdSso ?? (priorAcc.accSso + autoSso), totalHours: savedSlip?.totalHours ?? stats.totalHours, wageRate: savedSlip?.wageRate ?? wRate
+                ytdIncome: savedSlip?.ytdIncome ?? calculatedYtdIncome, 
+                ytdTax: savedSlip?.ytdTax ?? priorAcc.accTax, 
+                ytdSso: savedSlip?.ytdSso ?? (priorAcc.accSso + autoSso), 
+                totalHours: savedSlip?.totalHours ?? stats.totalHours, 
+                wageRate: savedSlip?.wageRate ?? wRate
             };
 
             SLIP_TEXT_FIELDS.forEach(k => {
@@ -1819,9 +1825,15 @@
             if (empId && cycleVal && newRate > 0) {
                 const stats = getAttendanceStatsForCycle(empId, cycleVal);
                 const setField = (key, amount) => { const el = document.getElementById(`edit_${key}`); if(el) el.value = amount > 0 ? amount.toFixed(2) : ''; };
-                setField('salary', stats.workBaseHrs * newRate); setField('ot', stats.workOtHrs * newRate * OT_MULTIPLIER);
-                setField('weeklyOff', stats.sevenBaseHrs * newRate); setField('weeklyOffOt', stats.sevenOtHrs * newRate * OT_MULTIPLIER);
-                setField('sso', Math.min(750, Math.round(((stats.workBaseHrs * newRate) + (stats.sevenBaseHrs * newRate)) * 0.05)));
+                setField('salary', stats.workBaseHrs * newRate); 
+                setField('ot', stats.workOtHrs * newRate * OT_MULTIPLIER);
+                setField('weeklyOff', stats.sevenBaseHrs * newRate * 2.0); 
+                setField('weeklyOffOt', stats.sevenOtHrs * newRate * 2.5);
+                setField('holidayWage', stats.holBaseHrs * newRate * 2.0); 
+                setField('holidayOt', stats.holOtHrs * newRate * 2.5);
+                
+                const ssoBaseHrs = stats.workBaseHrs + stats.sevenBaseHrs + stats.holBaseHrs;
+                setField('sso', Math.min(750, Math.round((ssoBaseHrs * newRate) * 0.05)));
             }
             window.recalcSlipTotals(true);
         };
@@ -1918,106 +1930,39 @@
 
         async function exportElementToPdfClean(sourceEl, targetWidthPx, pdfConfig, btnEl, defaultBtnHtml) {
             if(btnEl) { btnEl.innerHTML = '<span>⏳</span> กำลังสร้าง PDF...'; btnEl.disabled = true; }
-            const savedScrollY = window.scrollY;
-            const appContentEl = document.getElementById('appContent');
-
-            // 1. สร้างฉากบังหน้าจอพร้อมใส่ data-html2canvas-ignore="true" เพื่อไม่ให้ html2canvas จับภาพฉากสีขาวทับเนื้อหา
-            const overlayCurtain = document.createElement('div');
-            overlayCurtain.setAttribute('data-html2canvas-ignore', 'true');
-            overlayCurtain.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.96);z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+            const savedScrollY = window.scrollY; const overlayCurtain = document.createElement('div');
+            overlayCurtain.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
             overlayCurtain.innerHTML = '<div class="spinner mb-3"></div><p class="text-indigo-700 font-bold text-sm">กำลังจัดหน้าและสร้างไฟล์ PDF...</p>';
-            document.body.appendChild(overlayCurtain);
-
-            // 2. ใช้ position: relative (ห้ามใช้ position: absolute บน wrapper ที่ส่งเข้า html2pdf เพราะจะทำให้ .html2pdf__container มีความสูง 0px)
-            const tempWrapper = document.createElement('div');
-            tempWrapper.style.cssText = `position:relative;display:block;width:${targetWidthPx}px;background:#ffffff;overflow:visible;padding:0;margin:0;`;
-
-            const cloneEl = sourceEl.cloneNode(true);
-            cloneEl.style.cssText = `position:relative;display:block;margin:0;width:${targetWidthPx}px;min-width:${targetWidthPx}px;max-width:${targetWidthPx}px;box-shadow:none;border-radius:0;background:#ffffff;box-sizing:border-box;`;
+            
+            const tempWrapper = document.createElement('div'); tempWrapper.style.cssText = `position:absolute;top:0;left:0;width:${targetWidthPx}px;z-index:99990;background:#ffffff;overflow:visible;padding:0;margin:0;`;
+            const cloneEl = sourceEl.cloneNode(true); cloneEl.style.cssText = `margin:0;width:${targetWidthPx}px;min-width:${targetWidthPx}px;max-width:${targetWidthPx}px;box-shadow:none;border-radius:0;`;
             if (pdfConfig.compactReport) cloneEl.classList.add('pdf-export-compact');
-
-            // ลบ element ที่ซ่อนอยู่และคอลัมน์ปุ่ม .no-print ออกก่อนสร้าง PDF
-            cloneEl.querySelectorAll('input.hidden, .hidden, .no-print, #badgeCustomOverride').forEach(el => el.remove());
-
-            tempWrapper.appendChild(cloneEl);
-            document.body.appendChild(tempWrapper);
+            cloneEl.querySelectorAll('input.hidden, .hidden').forEach(el => el.remove());
+            tempWrapper.appendChild(cloneEl); document.body.appendChild(overlayCurtain); document.body.appendChild(tempWrapper);
 
             try {
-                window.scrollTo(0, 0);
-                if (document.fonts && document.fonts.ready) await document.fonts.ready;
-                await new Promise(r => setTimeout(r, 250));
-
+                window.scrollTo(0, 0); if (document.fonts && document.fonts.ready) await document.fonts.ready; await new Promise(r => setTimeout(r, 200));
                 let captureWidthPx = targetWidthPx;
-                const renderHeight = cloneEl.scrollHeight;
-                const maxOnePageHeightPx = Math.floor(
-                    targetWidthPx *
-                    ((pdfConfig.orientation === 'landscape' ? 210 : 297) - pdfConfig.margin[0] - pdfConfig.margin[2]) /
-                    ((pdfConfig.orientation === 'landscape' ? 297 : 210) - pdfConfig.margin[1] - pdfConfig.margin[3])
-                );
-
-                if (pdfConfig.compactReport && renderHeight > maxOnePageHeightPx) {
-                    captureWidthPx = Math.ceil(renderHeight * ((pdfConfig.orientation === 'landscape' ? 297 : 210) / (pdfConfig.orientation === 'landscape' ? 210 : 297))) + 8;
-                    tempWrapper.style.width = captureWidthPx + 'px';
-                    cloneEl.style.margin = '0 auto';
-                }
-
-                // ถอด tempWrapper ที่ใช้วัดขนาดออกจาก DOM และซ่อน #appContent ชั่วคราวจาก html2canvas
-                // เพื่อให้ html2pdf สร้าง .html2pdf__container เพียงชุดเดียวที่มุม (0,0) โดยไม่มีเลเยอร์อื่นรบกวน
-                if (tempWrapper.parentNode) tempWrapper.remove();
-                if (appContentEl) appContentEl.setAttribute('data-html2canvas-ignore', 'true');
-
+                const renderHeight = cloneEl.scrollHeight, maxOnePageHeightPx = Math.floor(targetWidthPx * ((pdfConfig.orientation === 'landscape' ? 210 : 297) - pdfConfig.margin[0] - pdfConfig.margin[2]) / ((pdfConfig.orientation === 'landscape' ? 297 : 210) - pdfConfig.margin[1] - pdfConfig.margin[3]));
+                if (renderHeight > maxOnePageHeightPx) { captureWidthPx = Math.ceil(renderHeight * ((pdfConfig.orientation === 'landscape' ? 297 : 210) / (pdfConfig.orientation === 'landscape' ? 210 : 297))) + 8; tempWrapper.style.width = captureWidthPx + 'px'; cloneEl.style.margin = '0 auto'; }
+                
                 await html2pdf().set({
-                    margin: pdfConfig.margin,
-                    filename: pdfConfig.filename,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: {
-                        scale: 2,
-                        useCORS: true,
-                        logging: false,
-                        backgroundColor: '#ffffff',
-                        width: captureWidthPx,
-                        windowWidth: captureWidthPx,
-                        x: 0,
-                        y: 0,
-                        scrollX: 0,
-                        scrollY: 0
-                    },
+                    margin: pdfConfig.margin, filename: pdfConfig.filename, image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', width: captureWidthPx, windowWidth: captureWidthPx, scrollX: 0, scrollY: 0 },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: pdfConfig.orientation }
                 }).from(tempWrapper).save();
-            } catch(e) {
-                console.error(e);
-                window.showCustomModal("เกิดข้อผิดพลาดในการสร้าง PDF");
-            } finally {
-                if (appContentEl) appContentEl.removeAttribute('data-html2canvas-ignore');
-                if (tempWrapper.parentNode) tempWrapper.remove();
-                if (overlayCurtain.parentNode) overlayCurtain.remove();
-                window.scrollTo(0, savedScrollY);
-                if (btnEl) { btnEl.innerHTML = defaultBtnHtml; btnEl.disabled = false; }
-            }
+            } catch(e) { window.showCustomModal("เกิดข้อผิดพลาดในการสร้าง PDF"); }
+            finally { if(tempWrapper.parentNode) tempWrapper.remove(); if(overlayCurtain.parentNode) overlayCurtain.remove(); window.scrollTo(0, savedScrollY); if(btnEl) { btnEl.innerHTML = defaultBtnHtml; btnEl.disabled = false; } }
         }
 
         window.generatePDF = async function() {
             const empId = isCurrentUserAdmin() ? document.getElementById('employeeSelect').value : currentUserRole;
-            await exportElementToPdfClean(
-                document.getElementById('reportToPrint'),
-                794,
-                { margin: [8, 10, 8, 10], filename: `Attendance_${empId}.pdf`, orientation: 'portrait', compactReport: true },
-                document.getElementById('btnPrintReportPdf'),
-                '<span>📄</span> บันทึกเป็น PDF'
-            );
+            await exportElementToPdfClean(document.getElementById('reportToPrint'), 794, { margin: [8, 10, 8, 10], filename: `Attendance_${empId}.pdf`, orientation: 'portrait', compactReport: true }, document.getElementById('btnPrintReportPdf'), '<span>📄</span> บันทึกเป็น PDF');
         };
-        
         window.generateSlipPDF = async function() {
             if(isSlipEditMode) exitSlipEditMode();
             const empId = isCurrentUserAdmin() ? document.getElementById('slipEmployeeSelect').value : currentUserRole;
-            const cycleVal = document.getElementById('slipCycleSelect').value;
-            await exportElementToPdfClean(
-                document.getElementById('slipToPrint'),
-                1020,
-                { margin: [8, 6, 8, 6], filename: `PaySlip_${empId}_${cycleVal}.pdf`, orientation: 'landscape', compactReport: false },
-                document.getElementById('btnPrintSlipPdf'),
-                '<span>🖨️</span> พิมพ์สลิป PDF'
-            );
+            await exportElementToPdfClean(document.getElementById('slipToPrint'), 1020, { margin: [8, 6, 8, 6], filename: `PaySlip_${empId}_${document.getElementById('slipCycleSelect').value}.pdf`, orientation: 'landscape', compactReport: false }, document.getElementById('btnPrintSlipPdf'), '<span>🖨️</span> พิมพ์สลิป PDF');
         };
     </script>
 </body>
