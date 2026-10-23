@@ -53,6 +53,40 @@
 
         .thumb-img { width: 36px; height: 36px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb; cursor: pointer; transition: transform 0.2s; }
         .thumb-img:hover { transform: scale(1.1); border-color: #3b82f6; }
+
+        /* สไตล์ระบบซูมและเลื่อนรูปภาพ (Zoom & Pan Viewport) */
+        .zoom-viewport {
+            position: relative;
+            overflow: hidden;
+            background-color: #f3f4f6;
+            border-radius: 0.5rem;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: pan-y;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .zoom-viewport.is-zoomed {
+            touch-action: none;
+            cursor: grab;
+        }
+        .zoom-viewport.is-zoomed:active {
+            cursor: grabbing;
+        }
+        .zoom-img {
+            transform-origin: center center;
+            transition: transform 0.08s ease-out;
+            will-change: transform;
+            max-height: 300px;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+        .zoom-img.no-transition {
+            transition: none !important;
+        }
     </style>
 </head>
 <body class="p-2 sm:p-4 md:p-6 relative text-gray-800">
@@ -73,38 +107,123 @@
         </div>
     </div>
 
-    <!-- Photo Viewer Modal (Floating Lightbox) -->
+    <!-- Photo Viewer Modal (Floating Lightbox with Zoom & Fullscreen) -->
     <div id="photoViewerModal" class="fixed inset-0 bg-black bg-opacity-80 z-[110] hidden flex items-center justify-center backdrop-blur-sm no-print">
-        <div class="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-lg w-full mx-4 flex flex-col max-h-[90vh]">
-            <div class="bg-gray-50 border-b p-4 flex justify-between items-center">
-                <div>
-                    <h3 class="font-bold text-gray-800 text-lg" id="pvTitle">ภาพถ่ายบันทึกเวลา</h3>
-                    <p class="text-xs text-gray-500" id="pvSubtitle">รายละเอียด</p>
+        <div class="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-lg w-full mx-3 sm:mx-4 flex flex-col max-h-[92vh]">
+            <!-- Top Dark Banner (เหมือนภาพที่ 2) -->
+            <div class="bg-slate-800 text-white px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center gap-2 text-xs sm:text-sm font-medium">
+                    <span class="text-amber-400 text-base">🔍</span>
+                    <span>ใช้นิ้วถ่างซูมที่ภาพได้ทันที หรือแตะเพื่อขยายเต็มจอ</span>
                 </div>
-                <button onclick="closePhotoViewer()" class="bg-gray-200 hover:bg-gray-300 text-gray-600 rounded-full p-2 transition-colors">
+                <button onclick="closePhotoViewer()" class="bg-slate-700 hover:bg-slate-600 text-gray-200 rounded-full p-1.5 transition-colors shrink-0 ml-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <div class="p-4 overflow-y-auto bg-gray-100 flex-1">
-                <div class="grid grid-cols-1 gap-4">
-                    <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 text-center relative">
-                        <p class="text-sm font-bold text-emerald-600 mb-2">📸 รูปเข้างาน <span id="pvTimeIn" class="text-gray-500 font-normal">(--:--)</span></p>
-                        <img id="pvImgIn" src="" alt="ภาพเข้างาน" class="w-full h-auto max-h-64 object-contain rounded bg-gray-50 hidden mx-auto mb-2">
-                        <p id="pvNoImgIn" class="text-gray-400 text-sm py-8 bg-gray-50 rounded mb-2">ไม่มีรูปภาพ (หรือถูกลบอัตโนมัติเนื่องจากเกิน 90 วัน)</p>
-                        <button onclick="triggerReportPhotoUpload('in')" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1">
-                            ✏️ แนบ/เปลี่ยนรูปเข้างาน
-                        </button>
-                    </div>
-                    <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 text-center relative">
-                        <p class="text-sm font-bold text-rose-600 mb-2">📸 รูปออกงาน <span id="pvTimeOut" class="text-gray-500 font-normal">(--:--)</span></p>
-                        <img id="pvImgOut" src="" alt="ภาพออกงาน" class="w-full h-auto max-h-64 object-contain rounded bg-gray-50 hidden mx-auto mb-2">
-                        <p id="pvNoImgOut" class="text-gray-400 text-sm py-8 bg-gray-50 rounded mb-2">ไม่มีรูปภาพ (หรือถูกลบอัตโนมัติเนื่องจากเกิน 90 วัน)</p>
-                        <button onclick="triggerReportPhotoUpload('out')" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1">
-                            ✏️ แนบ/เปลี่ยนรูปออกงาน
-                        </button>
-                    </div>
+
+            <!-- Sub-header: Employee & Date Info -->
+            <div class="bg-gray-50 border-b px-4 py-2.5 flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-gray-800 text-sm sm:text-base leading-tight" id="pvTitle">ภาพถ่ายบันทึกเวลา</h3>
+                    <p class="text-xs text-gray-500 mt-0.5" id="pvSubtitle">รายละเอียด</p>
                 </div>
             </div>
+
+            <!-- Scrollable Image Cards Container -->
+            <div class="p-3 sm:p-4 overflow-y-auto bg-gray-100 flex-1 space-y-4">
+                
+                <!-- Card 1: รูปเข้างาน -->
+                <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 relative">
+                    <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2 border-b border-gray-100">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-base">📸</span>
+                            <div class="text-left">
+                                <span class="text-xs sm:text-sm font-bold text-gray-800 block leading-tight">รูปเข้างาน</span>
+                                <span id="pvTimeIn" class="text-[11px] text-emerald-600 font-semibold">(--:--)</span>
+                            </div>
+                        </div>
+                        <!-- Zoom Controls Bar -->
+                        <div id="pvControlsIn" class="flex items-center gap-1">
+                            <button type="button" onclick="stepZoom('in', -0.25)" class="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm flex items-center justify-center transition-colors shadow-sm" title="ซูมออก">−</button>
+                            <span id="pvZoomPercentIn" class="min-w-[46px] text-center py-1 px-1.5 rounded-md bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-100">100%</span>
+                            <button type="button" onclick="stepZoom('in', 0.25)" class="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm flex items-center justify-center transition-colors shadow-sm" title="ซูมเข้า">+</button>
+                            <button type="button" onclick="resetImageZoom('in')" class="px-2 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold text-xs transition-colors shadow-sm">รีเซ็ต</button>
+                            <button type="button" onclick="openFullscreenZoom('in')" class="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs flex items-center gap-1 transition-colors shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                <span>เต็มจอ</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="pvViewportIn" class="zoom-viewport min-h-[220px] mb-2.5">
+                        <img id="pvImgIn" src="" alt="ภาพเข้างาน" class="zoom-img hidden">
+                        <p id="pvNoImgIn" class="text-gray-400 text-sm py-12 px-4 text-center">ไม่มีรูปภาพ (หรือถูกลบอัตโนมัติเนื่องจากเกิน 90 วัน)</p>
+                    </div>
+
+                    <button id="pvUploadBtnIn" onclick="triggerReportPhotoUpload('in')" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1">
+                        ✏️ แนบ/เปลี่ยนรูปเข้างาน
+                    </button>
+                </div>
+
+                <!-- Card 2: รูปออกงาน -->
+                <div id="pvCardOut" class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 relative">
+                    <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2 border-b border-gray-100">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-base">📸</span>
+                            <div class="text-left">
+                                <span class="text-xs sm:text-sm font-bold text-gray-800 block leading-tight">รูปออกงาน</span>
+                                <span id="pvTimeOut" class="text-[11px] text-rose-600 font-semibold">(--:--)</span>
+                            </div>
+                        </div>
+                        <!-- Zoom Controls Bar -->
+                        <div id="pvControlsOut" class="flex items-center gap-1">
+                            <button type="button" onclick="stepZoom('out', -0.25)" class="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm flex items-center justify-center transition-colors shadow-sm" title="ซูมออก">−</button>
+                            <span id="pvZoomPercentOut" class="min-w-[46px] text-center py-1 px-1.5 rounded-md bg-amber-50 text-amber-700 font-bold text-xs border border-amber-100">100%</span>
+                            <button type="button" onclick="stepZoom('out', 0.25)" class="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm flex items-center justify-center transition-colors shadow-sm" title="ซูมเข้า">+</button>
+                            <button type="button" onclick="resetImageZoom('out')" class="px-2 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold text-xs transition-colors shadow-sm">รีเซ็ต</button>
+                            <button type="button" onclick="openFullscreenZoom('out')" class="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs flex items-center gap-1 transition-colors shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                <span>เต็มจอ</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="pvViewportOut" class="zoom-viewport min-h-[220px] mb-2.5">
+                        <img id="pvImgOut" src="" alt="ภาพออกงาน" class="zoom-img hidden">
+                        <p id="pvNoImgOut" class="text-gray-400 text-sm py-12 px-4 text-center">ไม่มีรูปภาพ (หรือถูกลบอัตโนมัติเนื่องจากเกิน 90 วัน)</p>
+                    </div>
+
+                    <button id="pvUploadBtnOut" onclick="triggerReportPhotoUpload('out')" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1">
+                        ✏️ แนบ/เปลี่ยนรูปออกงาน
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Zoom Lightbox Modal (โหมดขยายเต็มจอ) -->
+    <div id="fullscreenZoomModal" class="fixed inset-0 bg-black bg-opacity-95 z-[120] hidden flex flex-col no-print select-none">
+        <div class="bg-slate-900 bg-opacity-90 text-white px-4 py-3 flex flex-wrap justify-between items-center gap-2 border-b border-slate-700 z-10">
+            <div class="flex items-center gap-2">
+                <span class="text-emerald-400">🖼️</span>
+                <span id="fsModalTitle" class="font-bold text-sm sm:text-base">ดูรูปภาพเต็มจอ</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button type="button" onclick="stepZoom('fs', -0.25)" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-base flex items-center justify-center border border-slate-600">−</button>
+                <span id="pvZoomPercentFs" class="min-w-[52px] text-center py-1 px-2 rounded-md bg-teal-900 text-teal-200 font-bold text-xs border border-teal-700">100%</span>
+                <button type="button" onclick="stepZoom('fs', 0.25)" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-base flex items-center justify-center border border-slate-600">+</button>
+                <button type="button" onclick="resetImageZoom('fs')" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-gray-200 font-semibold text-xs border border-slate-600">รีเซ็ต</button>
+                <button type="button" onclick="closeFullscreenZoom()" class="ml-2 bg-rose-600 hover:bg-rose-700 text-white rounded-full p-1.5 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+        </div>
+        <div id="pvViewportFs" class="flex-1 relative overflow-hidden flex items-center justify-center" style="touch-action: none; cursor: grab;">
+            <img id="pvImgFs" src="" alt="ภาพเต็มจอ" class="zoom-img" style="max-height: 85vh; max-width: 95vw;">
+        </div>
+        <div class="bg-slate-900 bg-opacity-80 text-gray-400 text-center py-2 text-xs">
+            ใช้นิ้วถ่างเพื่อซูม หรือลากเพื่อเลื่อนดูจุดต่างๆ ของภาพ
         </div>
     </div>
 
@@ -1164,6 +1283,220 @@
 
         const STATUS_LABELS = { 'work':'ทำงาน', 'OT':'7Day', 'holiday_work':'นักขัตฤกษ์', 'leave_sick':'ลาป่วย', 'leave_personal':'ลากิจ', 'leave_vacation':'พักร้อน', 'holiday':'วันหยุดพักผ่อน', 'absent':'ขาดงาน', 'reset':'รีเซ็ต' };
 
+        /* ==============================================================
+           ระบบควบคุมการซูม ถ่างนิ้วซูม และลากเลื่อนภาพ (Pinch-to-Zoom & Pan)
+           ============================================================== */
+        const zoomState = {
+            in: { scale: 1, x: 0, y: 0, viewportId: 'pvViewportIn', imgId: 'pvImgIn', labelId: 'pvZoomPercentIn' },
+            out: { scale: 1, x: 0, y: 0, viewportId: 'pvViewportOut', imgId: 'pvImgOut', labelId: 'pvZoomPercentOut' },
+            fs: { scale: 1, x: 0, y: 0, viewportId: 'pvViewportFs', imgId: 'pvImgFs', labelId: 'pvZoomPercentFs' }
+        };
+
+        function updateZoomTransform(key, disableTransition = false) {
+            const st = zoomState[key];
+            if (!st) return;
+            const imgEl = document.getElementById(st.imgId);
+            const vpEl = document.getElementById(st.viewportId);
+            const lblEl = document.getElementById(st.labelId);
+
+            if (st.scale <= 1) {
+                st.scale = 1;
+                st.x = 0;
+                st.y = 0;
+            }
+
+            if (imgEl) {
+                if (disableTransition) imgEl.classList.add('no-transition');
+                else imgEl.classList.remove('no-transition');
+                imgEl.style.transform = `translate3d(${st.x}px, ${st.y}px, 0) scale(${st.scale})`;
+            }
+            if (vpEl) {
+                if (st.scale > 1.01 || key === 'fs') vpEl.classList.add('is-zoomed');
+                else vpEl.classList.remove('is-zoomed');
+            }
+            if (lblEl) {
+                lblEl.textContent = `${Math.round(st.scale * 100)}%`;
+            }
+        }
+
+        window.stepZoom = function(key, delta) {
+            const st = zoomState[key];
+            if (!st) return;
+            const imgEl = document.getElementById(st.imgId);
+            if (!imgEl || imgEl.classList.contains('hidden') || !imgEl.getAttribute('src')) return;
+
+            let nextScale = Math.round((st.scale + delta) * 100) / 100;
+            nextScale = Math.max(1, Math.min(5, nextScale));
+            st.scale = nextScale;
+            if (st.scale === 1) { st.x = 0; st.y = 0; }
+            updateZoomTransform(key, false);
+        };
+
+        window.resetImageZoom = function(key) {
+            const st = zoomState[key];
+            if (!st) return;
+            st.scale = 1;
+            st.x = 0;
+            st.y = 0;
+            updateZoomTransform(key, false);
+        };
+
+        window.openFullscreenZoom = function(sourceKey) {
+            const srcImg = document.getElementById(sourceKey === 'in' ? 'pvImgIn' : 'pvImgOut');
+            if (!srcImg || srcImg.classList.contains('hidden') || !srcImg.getAttribute('src')) {
+                return;
+            }
+            const fsImg = document.getElementById('pvImgFs');
+            fsImg.src = srcImg.src;
+
+            const titleText = sourceKey === 'in'
+                ? `📸 รูปเข้างาน ${document.getElementById('pvTimeIn')?.textContent || ''}`
+                : `📸 รูปออกงาน ${document.getElementById('pvTimeOut')?.textContent || ''}`;
+            document.getElementById('fsModalTitle').textContent = titleText;
+
+            window.resetImageZoom('fs');
+            document.getElementById('fullscreenZoomModal').classList.remove('hidden');
+        };
+
+        window.closeFullscreenZoom = function() {
+            document.getElementById('fullscreenZoomModal').classList.add('hidden');
+            window.resetImageZoom('fs');
+        };
+
+        function attachInteractiveZoomEvents(key) {
+            const st = zoomState[key];
+            const vp = document.getElementById(st.viewportId);
+            if (!vp) return;
+
+            let isDragging = false;
+            let startX = 0, startY = 0;
+            let initialPinchDist = null;
+            let initialScale = 1;
+            let movedDistance = 0;
+            let touchStartTime = 0;
+
+            const getTouchDist = (touches) => {
+                const dx = touches[0].clientX - touches[1].clientX;
+                const dy = touches[0].clientY - touches[1].clientY;
+                return Math.hypot(dx, dy);
+            };
+
+            // Touch Events (Mobile Pinch-to-Zoom & Drag Pan)
+            vp.addEventListener('touchstart', (e) => {
+                const imgEl = document.getElementById(st.imgId);
+                if (!imgEl || imgEl.classList.contains('hidden') || !imgEl.getAttribute('src')) return;
+
+                if (e.touches.length === 2) {
+                    e.preventDefault();
+                    isDragging = false;
+                    initialPinchDist = getTouchDist(e.touches);
+                    initialScale = st.scale;
+                } else if (e.touches.length === 1) {
+                    movedDistance = 0;
+                    touchStartTime = Date.now();
+                    if (st.scale > 1.01 || key === 'fs') {
+                        isDragging = true;
+                        startX = e.touches[0].clientX - st.x;
+                        startY = e.touches[0].clientY - st.y;
+                    }
+                }
+            }, { passive: false });
+
+            vp.addEventListener('touchmove', (e) => {
+                const imgEl = document.getElementById(st.imgId);
+                if (!imgEl || imgEl.classList.contains('hidden') || !imgEl.getAttribute('src')) return;
+
+                if (e.touches.length === 2 && initialPinchDist) {
+                    e.preventDefault();
+                    const currentDist = getTouchDist(e.touches);
+                    const ratio = currentDist / initialPinchDist;
+                    st.scale = Math.max(1, Math.min(5, initialScale * ratio));
+                    updateZoomTransform(key, true);
+                } else if (e.touches.length === 1 && isDragging && st.scale > 1.01) {
+                    e.preventDefault();
+                    const nx = e.touches[0].clientX - startX;
+                    const ny = e.touches[0].clientY - startY;
+                    movedDistance += Math.hypot(nx - st.x, ny - st.y);
+                    st.x = nx;
+                    st.y = ny;
+                    updateZoomTransform(key, true);
+                } else if (e.touches.length === 1) {
+                    movedDistance += 10;
+                }
+            }, { passive: false });
+
+            vp.addEventListener('touchend', (e) => {
+                if (e.touches.length < 2) {
+                    initialPinchDist = null;
+                }
+                if (e.touches.length === 0) {
+                    isDragging = false;
+                    if (st.scale <= 1.02) {
+                        window.resetImageZoom(key);
+                    } else {
+                        updateZoomTransform(key, false);
+                    }
+                    // แตะที่รูป 1 ครั้ง (เมื่อยังไม่ได้ซูม) เพื่อขยายเต็มจอทันที
+                    const elapsed = Date.now() - touchStartTime;
+                    if (key !== 'fs' && st.scale === 1 && movedDistance < 8 && elapsed < 280) {
+                        window.openFullscreenZoom(key);
+                    }
+                }
+            });
+
+            // Mouse Wheel & Drag Events (สำหรับใช้งานบนคอมพิวเตอร์)
+            vp.addEventListener('wheel', (e) => {
+                const imgEl = document.getElementById(st.imgId);
+                if (!imgEl || imgEl.classList.contains('hidden') || !imgEl.getAttribute('src')) return;
+                e.preventDefault();
+                const delta = e.deltaY < 0 ? 0.2 : -0.2;
+                window.stepZoom(key, delta);
+            }, { passive: false });
+
+            vp.addEventListener('mousedown', (e) => {
+                const imgEl = document.getElementById(st.imgId);
+                if (!imgEl || imgEl.classList.contains('hidden') || !imgEl.getAttribute('src')) return;
+                movedDistance = 0;
+                if (st.scale > 1.01) {
+                    e.preventDefault();
+                    isDragging = true;
+                    startX = e.clientX - st.x;
+                    startY = e.clientY - st.y;
+                }
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const nx = e.clientX - startX;
+                const ny = e.clientY - startY;
+                movedDistance += Math.hypot(nx - st.x, ny - st.y);
+                st.x = nx;
+                st.y = ny;
+                updateZoomTransform(key, true);
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    updateZoomTransform(key, false);
+                }
+            });
+
+            vp.addEventListener('click', (e) => {
+                const imgEl = document.getElementById(st.imgId);
+                if (!imgEl || imgEl.classList.contains('hidden') || !imgEl.getAttribute('src')) return;
+                if (key !== 'fs' && st.scale === 1 && movedDistance < 5) {
+                    window.openFullscreenZoom(key);
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            attachInteractiveZoomEvents('in');
+            attachInteractiveZoomEvents('out');
+            attachInteractiveZoomEvents('fs');
+        });
+
         function buildCycleOptions() {
             const cycles = [];
             let y = 2026, m = 9;
@@ -1707,14 +2040,23 @@
         window.openAdminFullImg = function(type) {
             const src = document.getElementById(type === 'in' ? 'adminThumbIn' : 'adminThumbOut').src;
             if(src) {
+                window.resetImageZoom('in');
+                window.resetImageZoom('out');
                 document.getElementById('pvTitle').textContent = `ภาพย้อนหลัง (โดย Admin)`;
                 document.getElementById('pvSubtitle').textContent = document.getElementById('inputDate').value;
+                document.getElementById('pvUploadBtnIn').classList.add('hidden');
+                document.getElementById('pvUploadBtnOut').classList.add('hidden');
+
                 if(type === 'in') {
                     document.getElementById('pvImgIn').src = src; document.getElementById('pvImgIn').classList.remove('hidden'); document.getElementById('pvNoImgIn').classList.add('hidden');
+                    document.getElementById('pvControlsIn').classList.remove('hidden');
                     document.getElementById('pvImgOut').classList.add('hidden'); document.getElementById('pvNoImgOut').classList.remove('hidden');
+                    document.getElementById('pvControlsOut').classList.add('hidden');
                 } else {
                     document.getElementById('pvImgOut').src = src; document.getElementById('pvImgOut').classList.remove('hidden'); document.getElementById('pvNoImgOut').classList.add('hidden');
+                    document.getElementById('pvControlsOut').classList.remove('hidden');
                     document.getElementById('pvImgIn').classList.add('hidden'); document.getElementById('pvNoImgIn').classList.remove('hidden');
+                    document.getElementById('pvControlsIn').classList.add('hidden');
                 }
                 document.getElementById('photoViewerModal').classList.remove('hidden');
             }
@@ -1862,21 +2204,39 @@
             let r = window.allRecords.find(rec => rec.empId === empId && rec.date === dateStr);
             if(!r) return;
 
+            window.resetImageZoom('in');
+            window.resetImageZoom('out');
+
+            document.getElementById('pvUploadBtnIn').classList.remove('hidden');
+            document.getElementById('pvUploadBtnOut').classList.remove('hidden');
+
             document.getElementById('pvTitle').textContent = `ภาพถ่ายบันทึกเวลา (${window.allEmployees[empId]})`;
             document.getElementById('pvSubtitle').textContent = `วันที่ ${dateStr.split('-')[2]}/${dateStr.split('-')[1]}/${dateStr.split('-')[0]}`;
 
             document.getElementById('pvTimeIn').textContent = r.in && r.in !== '-' ? `(${r.in} น.)` : '(--:--)';
             if(r.photoIn) {
-                document.getElementById('pvImgIn').src = r.photoIn; document.getElementById('pvImgIn').classList.remove('hidden'); document.getElementById('pvNoImgIn').classList.add('hidden');
+                document.getElementById('pvImgIn').src = r.photoIn;
+                document.getElementById('pvImgIn').classList.remove('hidden');
+                document.getElementById('pvNoImgIn').classList.add('hidden');
+                document.getElementById('pvControlsIn').classList.remove('hidden');
             } else {
-                document.getElementById('pvImgIn').classList.add('hidden'); document.getElementById('pvNoImgIn').classList.remove('hidden');
+                document.getElementById('pvImgIn').src = '';
+                document.getElementById('pvImgIn').classList.add('hidden');
+                document.getElementById('pvNoImgIn').classList.remove('hidden');
+                document.getElementById('pvControlsIn').classList.add('hidden');
             }
 
             document.getElementById('pvTimeOut').textContent = r.out && r.out !== '-' ? `(${r.out} น.)` : '(--:--)';
             if(r.photoOut) {
-                document.getElementById('pvImgOut').src = r.photoOut; document.getElementById('pvImgOut').classList.remove('hidden'); document.getElementById('pvNoImgOut').classList.add('hidden');
+                document.getElementById('pvImgOut').src = r.photoOut;
+                document.getElementById('pvImgOut').classList.remove('hidden');
+                document.getElementById('pvNoImgOut').classList.add('hidden');
+                document.getElementById('pvControlsOut').classList.remove('hidden');
             } else {
-                document.getElementById('pvImgOut').classList.add('hidden'); document.getElementById('pvNoImgOut').classList.remove('hidden');
+                document.getElementById('pvImgOut').src = '';
+                document.getElementById('pvImgOut').classList.add('hidden');
+                document.getElementById('pvNoImgOut').classList.remove('hidden');
+                document.getElementById('pvControlsOut').classList.add('hidden');
             }
 
             document.getElementById('photoViewerModal').classList.remove('hidden');
@@ -1884,6 +2244,9 @@
 
         window.closePhotoViewer = function() {
             document.getElementById('photoViewerModal').classList.add('hidden');
+            window.closeFullscreenZoom();
+            window.resetImageZoom('in');
+            window.resetImageZoom('out');
             currentViewerEmpId = null;
             currentViewerDate = null;
         };
@@ -1925,13 +2288,17 @@
                 if(success) {
                     window.showCustomModal(`✅ แนบภาพ <b>${pendingRetroType === 'in' ? 'เข้า' : 'ออก'}งาน</b> สำเร็จ`);
                     if (pendingRetroType === 'in') {
+                        window.resetImageZoom('in');
                         document.getElementById('pvImgIn').src = base64Image;
                         document.getElementById('pvImgIn').classList.remove('hidden');
                         document.getElementById('pvNoImgIn').classList.add('hidden');
+                        document.getElementById('pvControlsIn').classList.remove('hidden');
                     } else {
+                        window.resetImageZoom('out');
                         document.getElementById('pvImgOut').src = base64Image;
                         document.getElementById('pvImgOut').classList.remove('hidden');
                         document.getElementById('pvNoImgOut').classList.add('hidden');
+                        document.getElementById('pvControlsOut').classList.remove('hidden');
                     }
                     window.renderReport(); 
                 }
