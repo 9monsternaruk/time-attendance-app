@@ -54,6 +54,7 @@
         .thumb-img { width: 36px; height: 36px; object-fit: cover; border-radius: 6px; border: 1px solid #e5e7eb; cursor: pointer; transition: transform 0.2s; }
         .thumb-img:hover { transform: scale(1.1); border-color: #3b82f6; }
 
+        /* สไตล์ระบบซูมและเลื่อนรูปภาพ (Zoom & Pan Viewport) */
         .zoom-viewport {
             position: relative;
             overflow: hidden;
@@ -106,9 +107,10 @@
         </div>
     </div>
 
-    <!-- Photo Viewer Modal -->
+    <!-- Photo Viewer Modal (Floating Lightbox with Zoom & Fullscreen) -->
     <div id="photoViewerModal" class="fixed inset-0 bg-black bg-opacity-80 z-[110] hidden flex items-center justify-center backdrop-blur-sm no-print">
         <div class="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-lg w-full mx-3 sm:mx-4 flex flex-col max-h-[92vh]">
+            <!-- Top Dark Banner (เหมือนภาพที่ 2) -->
             <div class="bg-slate-800 text-white px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center gap-2 text-xs sm:text-sm font-medium">
                     <span class="text-amber-400 text-base">🔍</span>
@@ -119,6 +121,7 @@
                 </button>
             </div>
 
+            <!-- Sub-header: Employee & Date Info -->
             <div class="bg-gray-50 border-b px-4 py-2.5 flex justify-between items-center">
                 <div>
                     <h3 class="font-bold text-gray-800 text-sm sm:text-base leading-tight" id="pvTitle">ภาพถ่ายบันทึกเวลา</h3>
@@ -126,7 +129,9 @@
                 </div>
             </div>
 
+            <!-- Scrollable Image Cards Container -->
             <div class="p-3 sm:p-4 overflow-y-auto bg-gray-100 flex-1 space-y-4">
+                
                 <!-- Card 1: รูปเข้างาน -->
                 <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 relative">
                     <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2 border-b border-gray-100">
@@ -137,6 +142,7 @@
                                 <span id="pvTimeIn" class="text-[11px] text-emerald-600 font-semibold">(--:--)</span>
                             </div>
                         </div>
+                        <!-- Zoom Controls Bar -->
                         <div id="pvControlsIn" class="flex items-center gap-1">
                             <button type="button" onclick="stepZoom('in', -0.25)" class="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm flex items-center justify-center transition-colors shadow-sm" title="ซูมออก">−</button>
                             <span id="pvZoomPercentIn" class="min-w-[46px] text-center py-1 px-1.5 rounded-md bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-100">100%</span>
@@ -148,10 +154,12 @@
                             </button>
                         </div>
                     </div>
+
                     <div id="pvViewportIn" class="zoom-viewport min-h-[220px] mb-2.5">
                         <img id="pvImgIn" src="" alt="ภาพเข้างาน" class="zoom-img hidden">
-                        <p id="pvNoImgIn" class="text-gray-400 text-sm py-12 px-4 text-center">ไม่มีรูปภาพ</p>
+                        <p id="pvNoImgIn" class="text-gray-400 text-sm py-12 px-4 text-center">ไม่มีรูปภาพ (หรือถูกลบอัตโนมัติเนื่องจากเกิน 90 วัน)</p>
                     </div>
+
                     <button id="pvUploadBtnIn" onclick="triggerReportPhotoUpload('in')" class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1">
                         ✏️ แนบ/เปลี่ยนรูปเข้างาน
                     </button>
@@ -167,6 +175,7 @@
                                 <span id="pvTimeOut" class="text-[11px] text-rose-600 font-semibold">(--:--)</span>
                             </div>
                         </div>
+                        <!-- Zoom Controls Bar -->
                         <div id="pvControlsOut" class="flex items-center gap-1">
                             <button type="button" onclick="stepZoom('out', -0.25)" class="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm flex items-center justify-center transition-colors shadow-sm" title="ซูมออก">−</button>
                             <span id="pvZoomPercentOut" class="min-w-[46px] text-center py-1 px-1.5 rounded-md bg-amber-50 text-amber-700 font-bold text-xs border border-amber-100">100%</span>
@@ -178,19 +187,22 @@
                             </button>
                         </div>
                     </div>
+
                     <div id="pvViewportOut" class="zoom-viewport min-h-[220px] mb-2.5">
                         <img id="pvImgOut" src="" alt="ภาพออกงาน" class="zoom-img hidden">
-                        <p id="pvNoImgOut" class="text-gray-400 text-sm py-12 px-4 text-center">ไม่มีรูปภาพ</p>
+                        <p id="pvNoImgOut" class="text-gray-400 text-sm py-12 px-4 text-center">ไม่มีรูปภาพ (หรือถูกลบอัตโนมัติเนื่องจากเกิน 90 วัน)</p>
                     </div>
+
                     <button id="pvUploadBtnOut" onclick="triggerReportPhotoUpload('out')" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1">
                         ✏️ แนบ/เปลี่ยนรูปออกงาน
                     </button>
                 </div>
+
             </div>
         </div>
     </div>
 
-    <!-- Fullscreen Zoom Lightbox Modal -->
+    <!-- Fullscreen Zoom Lightbox Modal (โหมดขยายเต็มจอ) -->
     <div id="fullscreenZoomModal" class="fixed inset-0 bg-black bg-opacity-95 z-[120] hidden flex flex-col no-print select-none">
         <div class="bg-slate-900 bg-opacity-90 text-white px-4 py-3 flex flex-wrap justify-between items-center gap-2 border-b border-slate-700 z-10">
             <div class="flex items-center gap-2">
@@ -210,9 +222,11 @@
         <div id="pvViewportFs" class="flex-1 relative overflow-hidden flex items-center justify-center" style="touch-action: none; cursor: grab;">
             <img id="pvImgFs" src="" alt="ภาพเต็มจอ" class="zoom-img" style="max-height: 85vh; max-width: 95vw;">
         </div>
+        <div class="bg-slate-900 bg-opacity-80 text-gray-400 text-center py-2 text-xs">
+            ใช้นิ้วถ่างเพื่อซูม หรือลากเพื่อเลื่อนดูจุดต่างๆ ของภาพ
+        </div>
     </div>
 
-    <!-- Login Overlay -->
     <div id="loginOverlay" class="overlay-screen hidden" style="background: rgba(0,0,0,0.6);">
         <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm mx-4 transform transition-all">
             <div class="text-center mb-8">
@@ -226,30 +240,29 @@
             <form onsubmit="handleLoginSubmit(event)" class="space-y-5">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">รหัสพนักงาน (Username)</label>
-                    <input type="text" id="loginUsername" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3.5 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="เช่น A03306 หรือ admin">
+                    <input type="text" id="loginUsername" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3.5 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="เช่น A03306 หรือ admin">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1.5">รหัสผ่าน (Password)</label>
-                    <input type="password" id="loginPassword" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3.5 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••">
+                    <input type="password" id="loginPassword" required class="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3.5 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="••••••••">
                 </div>
                 <div id="loginError" class="text-red-500 text-sm text-center hidden bg-red-50 p-3 rounded-lg border border-red-100 font-medium">
                     ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!
                 </div>
-                <button type="submit" id="btnLogin" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl transition-colors shadow-lg mt-2">
+                <button type="submit" id="btnLogin" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl transition-colors shadow-lg shadow-blue-200 mt-2">
                     เข้าสู่ระบบ
                 </button>
             </form>
         </div>
     </div>
 
-    <!-- Main Content -->
     <div id="appContent" class="max-w-6xl mx-auto hidden pb-24">
         
         <input type="file" id="empRealtimePhotoInput" accept="image/*" capture="environment" class="hidden" onchange="processRealtimePhoto(event)">
         <input type="file" id="empRetroPhotoInput" accept="image/*" class="hidden" onchange="processRetroPhoto(event)">
         <input type="file" id="adminPhotoInput" accept="image/*" class="hidden" onchange="processAdminPhoto(event)">
 
-        <div id="topHeader" class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-indigo-100 rounded-2xl p-4 mb-5 flex justify-between items-center shadow-sm no-print">
+        <div id="topHeader" class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-indigo-100 rounded-2xl p-4 mb-5 flex justify-between items-center shadow-sm no-print transition-all duration-300">
             <div class="flex items-center gap-3">
                 <div class="bg-white p-2 rounded-full flex items-center justify-center w-12 h-12 shadow-sm border border-indigo-50">
                     <span id="headerAvatar" class="text-indigo-600 font-bold text-xl">👤</span>
@@ -259,7 +272,7 @@
                     <p id="headerUserId" class="text-xs text-indigo-600 hidden bg-indigo-100 px-2 py-0.5 rounded-full inline-block mt-1 font-mono"></p>
                 </div>
             </div>
-            <button onclick="handleLogout()" class="text-rose-600 hover:text-white hover:bg-rose-500 px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors border border-rose-200 flex items-center gap-1.5 shadow-sm">
+            <button onclick="handleLogout()" class="text-rose-600 hover:text-white hover:bg-rose-500 px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors border border-rose-200 hover:border-transparent flex items-center gap-1.5 shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 ออก
             </button>
@@ -274,7 +287,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <div class="w-full">
                             <label class="block text-sm font-semibold text-gray-700 mb-1.5">พนักงาน</label>
-                            <select id="inputEmp" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 bg-gray-50 dynamic-emp-dropdown" onchange="loadRecordForAdmin()"></select>
+                            <select id="inputEmp" required class="w-full border border-gray-300 rounded-xl px-3 py-2.5 bg-gray-50 focus:bg-white focus:border-blue-500 outline-none dynamic-emp-dropdown" onchange="loadRecordForAdmin()"></select>
                         </div>
                         <div class="w-full">
                             <label class="block text-sm font-semibold text-gray-700 mb-1.5">วันที่</label>
@@ -941,7 +954,6 @@
         </div>
     </div>
 
-    <!-- Bottom Navigation -->
     <div id="bottomNav" class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 flex justify-around items-center pb-safe pt-2 px-2 z-40 no-print shadow-[0_-2px_10px_rgba(0,0,0,0.05)] hidden">
         <button onclick="switchTab('entry')" id="navEntry" class="flex flex-col items-center justify-center p-2 text-blue-600 hover:text-blue-700 w-full transition-colors rounded-lg">
             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -964,7 +976,6 @@
         </button>
     </div>
 
-    <!-- Firebase Script -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -1016,6 +1027,54 @@
             return dateStr.substring(0, 7);
         };
 
+        // ระบบกู้คืนและย้ายข้อมูลเก่าจาก attendances / payslips มาไว้ที่ collection ใหม่อัตโนมัติ
+        async function migrateOldDataIfNeeded() {
+            try {
+                const newColRef = collection(db, 'artifacts', appId, 'public', 'data', COL_TIME_LOGS);
+                const newSnap = await getDocs(newColRef);
+                if (newSnap.empty) {
+                    console.log("กำลังกู้คืนข้อมูลจากตารางเดิม...");
+                    const oldColRef = collection(db, 'artifacts', appId, 'public', 'data', 'attendances');
+                    const oldSnap = await getDocs(oldColRef);
+                    const batchPromises = [];
+                    oldSnap.forEach(oldDoc => {
+                        const data = oldDoc.data();
+                        if (data.date) {
+                            data.cycleKey = window.getCycleKeyFromDate(data.date);
+                            data.monthKey = window.getMonthKeyFromDate(data.date);
+                            batchPromises.push(
+                                setDoc(doc(db, 'artifacts', appId, 'public', 'data', COL_TIME_LOGS, oldDoc.id), data, { merge: true })
+                            );
+                        }
+                    });
+                    if (batchPromises.length > 0) {
+                        await Promise.all(batchPromises);
+                        console.log(`กู้คืนข้อมูลเวลาทำงานสำเร็จจำนวน ${batchPromises.length} รายการ`);
+                    }
+                }
+
+                // กู้คืน payslips ด้วย
+                const newSlipRef = collection(db, 'artifacts', appId, 'public', 'data', COL_PAYSLIPS);
+                const newSlipSnap = await getDocs(newSlipRef);
+                if (newSlipSnap.empty) {
+                    const oldSlipRef = collection(db, 'artifacts', appId, 'public', 'data', 'payslips');
+                    const oldSlipSnap = await getDocs(oldSlipRef);
+                    const slipPromises = [];
+                    oldSlipSnap.forEach(oldDoc => {
+                        slipPromises.push(
+                            setDoc(doc(db, 'artifacts', appId, 'public', 'data', COL_PAYSLIPS, oldDoc.id), oldDoc.data(), { merge: true })
+                        );
+                    });
+                    if (slipPromises.length > 0) {
+                        await Promise.all(slipPromises);
+                        console.log(`กู้คืนข้อมูลสลิปเงินเดือนสำเร็จจำนวน ${slipPromises.length} รายการ`);
+                    }
+                }
+            } catch (e) {
+                console.warn("Migration warning:", e);
+            }
+        }
+
         function seedDefaultEmployeesLocally() {
             if (Object.keys(window.allEmployees).length === 0) {
                 window.allEmployees = { 'A03306': 'ธงเดชณรงค์ ลูณสาคร', 'A02927': 'อภิเสก วงค์ลังกา', 'A02212': 'อนุกูลพันธ์ คุณา' };
@@ -1034,8 +1093,11 @@
                 auth = getAuth(app);
                 await signInAnonymously(auth);
                 
+                await migrateOldDataIfNeeded();
+                
                 startRealtimeSync();
                 if (typeof window.checkLoginStatus === 'function') window.checkLoginStatus();
+                setTimeout(() => cleanupOldPhotos(), 4000);
             } catch (error) {
                 console.error("Firebase Error:", error);
                 seedDefaultEmployeesLocally();
@@ -1045,6 +1107,7 @@
             }
         }
 
+        // ใช้ Date Range Query (where date >= startDate และ date <= endDate) เพื่อให้ดึงข้อมูลทั้งเก่าและใหม่ได้สมบูรณ์
         window.subscribeToCycleLogs = function(cycleKey) {
             if (!db || !cycleKey) return;
             if (currentSubscribedCycle === cycleKey && unsubscribeTimeLogs) return;
@@ -1086,6 +1149,46 @@
                 }
             });
         };
+
+        async function cleanupOldPhotos() {
+            if (!db) return;
+            try {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const lastClean = localStorage.getItem('att_last_photo_cleanup');
+                if (lastClean === todayStr) return;
+
+                const cutoff = new Date();
+                cutoff.setDate(cutoff.getDate() - 90);
+                const cutoffDateStr = cutoff.toISOString().split('T')[0];
+
+                const colRef = collection(db, 'artifacts', appId, 'public', 'data', COL_TIME_LOGS);
+                const q = query(colRef, where('date', '<', cutoffDateStr));
+                const snap = await getDocs(q);
+
+                let cleanedCount = 0;
+                const updatePromises = [];
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data.photoIn || data.photoOut) {
+                        cleanedCount++;
+                        updatePromises.push(
+                            updateDoc(doc(db, 'artifacts', appId, 'public', 'data', COL_TIME_LOGS, docSnap.id), {
+                                photoIn: deleteField(),
+                                photoOut: deleteField(),
+                                photoCleanedAt: todayStr
+                            })
+                        );
+                    }
+                });
+
+                if (updatePromises.length > 0) {
+                    await Promise.all(updatePromises);
+                }
+                localStorage.setItem('att_last_photo_cleanup', todayStr);
+            } catch (e) {
+                console.warn("Auto-cleanup photo warning:", e);
+            }
+        }
 
         function startRealtimeSync() {
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', COL_EMPLOYEES), (snapshot) => {
@@ -1152,7 +1255,6 @@
         initFirebase();
     </script>
 
-    <!-- App Logic Script -->
     <script>
         let clockInterval = null;
         let currentUserRole = null; 
@@ -1181,6 +1283,9 @@
 
         const STATUS_LABELS = { 'work':'ทำงาน', 'OT':'7Day', 'holiday_work':'นักขัตฤกษ์', 'leave_sick':'ลาป่วย', 'leave_personal':'ลากิจ', 'leave_vacation':'พักร้อน', 'holiday':'วันหยุดพักผ่อน', 'absent':'ขาดงาน', 'reset':'รีเซ็ต' };
 
+        /* ==============================================================
+           ระบบควบคุมการซูม ถ่างนิ้วซูม และลากเลื่อนภาพ (Pinch-to-Zoom & Pan)
+           ============================================================== */
         const zoomState = {
             in: { scale: 1, x: 0, y: 0, viewportId: 'pvViewportIn', imgId: 'pvImgIn', labelId: 'pvZoomPercentIn' },
             out: { scale: 1, x: 0, y: 0, viewportId: 'pvViewportOut', imgId: 'pvImgOut', labelId: 'pvZoomPercentOut' },
@@ -1194,38 +1299,61 @@
             const vpEl = document.getElementById(st.viewportId);
             const lblEl = document.getElementById(st.labelId);
 
-            if (st.scale <= 1) { st.scale = 1; st.x = 0; st.y = 0; }
+            if (st.scale <= 1) {
+                st.scale = 1;
+                st.x = 0;
+                st.y = 0;
+            }
+
             if (imgEl) {
-                if (disableTransition) imgEl.classList.add('no-transition'); else imgEl.classList.remove('no-transition');
+                if (disableTransition) imgEl.classList.add('no-transition');
+                else imgEl.classList.remove('no-transition');
                 imgEl.style.transform = `translate3d(${st.x}px, ${st.y}px, 0) scale(${st.scale})`;
             }
             if (vpEl) {
-                if (st.scale > 1.01 || key === 'fs') vpEl.classList.add('is-zoomed'); else vpEl.classList.remove('is-zoomed');
+                if (st.scale > 1.01 || key === 'fs') vpEl.classList.add('is-zoomed');
+                else vpEl.classList.remove('is-zoomed');
             }
-            if (lblEl) lblEl.textContent = `${Math.round(st.scale * 100)}%`;
+            if (lblEl) {
+                lblEl.textContent = `${Math.round(st.scale * 100)}%`;
+            }
         }
 
         window.stepZoom = function(key, delta) {
-            const st = zoomState[key]; if (!st) return;
+            const st = zoomState[key];
+            if (!st) return;
             const imgEl = document.getElementById(st.imgId);
             if (!imgEl || imgEl.classList.contains('hidden') || !imgEl.getAttribute('src')) return;
+
             let nextScale = Math.round((st.scale + delta) * 100) / 100;
-            st.scale = Math.max(1, Math.min(5, nextScale));
+            nextScale = Math.max(1, Math.min(5, nextScale));
+            st.scale = nextScale;
             if (st.scale === 1) { st.x = 0; st.y = 0; }
             updateZoomTransform(key, false);
         };
 
         window.resetImageZoom = function(key) {
-            const st = zoomState[key]; if (!st) return;
-            st.scale = 1; st.x = 0; st.y = 0; updateZoomTransform(key, false);
+            const st = zoomState[key];
+            if (!st) return;
+            st.scale = 1;
+            st.x = 0;
+            st.y = 0;
+            updateZoomTransform(key, false);
         };
 
         window.openFullscreenZoom = function(sourceKey) {
             const srcImg = document.getElementById(sourceKey === 'in' ? 'pvImgIn' : 'pvImgOut');
-            if (!srcImg || srcImg.classList.contains('hidden') || !srcImg.getAttribute('src')) return;
-            const fsImg = document.getElementById('pvImgFs'); fsImg.src = srcImg.src;
-            const titleText = sourceKey === 'in' ? `📸 รูปเข้างาน ${document.getElementById('pvTimeIn')?.textContent || ''}` : `📸 รูปออกงาน ${document.getElementById('pvTimeOut')?.textContent || ''}`;
+            if (!srcImg || srcImg.classList.contains('hidden') || !srcImg.getAttribute('src')) {
+                return;
+            }
+            const fsImg = document.getElementById('pvImgFs');
+            fsImg.src = srcImg.src;
+
+            const titleText = sourceKey === 'in'
+                ? `📸 รูปเข้างาน ${document.getElementById('pvTimeIn')?.textContent || ''}`
+                : `📸 รูปออกงาน ${document.getElementById('pvTimeOut')?.textContent || ''}`;
             document.getElementById('fsModalTitle').textContent = titleText;
+
             window.resetImageZoom('fs');
             document.getElementById('fullscreenZoomModal').classList.remove('hidden');
         };
@@ -1235,13 +1363,149 @@
             window.resetImageZoom('fs');
         };
 
+        function attachInteractiveZoomEvents(key) {
+            const st = zoomState[key];
+            const vp = document.getElementById(st.viewportId);
+            if (!vp) return;
+
+            let isDragging = false;
+            let startX = 0, startY = 0;
+            let initialPinchDist = null;
+            let initialScale = 1;
+            let movedDistance = 0;
+            let touchStartTime = 0;
+
+            const getTouchDist = (touches) => {
+                const dx = touches[0].clientX - touches[1].clientX;
+                const dy = touches[0].clientY - touches[1].clientY;
+                return Math.hypot(dx, dy);
+            };
+
+            // Touch Events (Mobile Pinch-to-Zoom & Drag Pan)
+            vp.addEventListener('touchstart', (e) => {
+                const imgEl = document.getElementById(st.imgId);
+                if (!imgEl || imgEl.classList.contains('hidden') || !imgEl.getAttribute('src')) return;
+
+                if (e.touches.length === 2) {
+                    e.preventDefault();
+                    isDragging = false;
+                    initialPinchDist = getTouchDist(e.touches);
+                    initialScale = st.scale;
+                } else if (e.touches.length === 1) {
+                    movedDistance = 0;
+                    touchStartTime = Date.now();
+                    if (st.scale > 1.01 || key === 'fs') {
+                        isDragging = true;
+                        startX = e.touches[0].clientX - st.x;
+                        startY = e.touches[0].clientY - st.y;
+                    }
+                }
+            }, { passive: false });
+
+            vp.addEventListener('touchmove', (e) => {
+                const imgEl = document.getElementById(st.imgId);
+                if (!imgEl || imgEl.classList.contains('hidden') || !imgEl.getAttribute('src')) return;
+
+                if (e.touches.length === 2 && initialPinchDist) {
+                    e.preventDefault();
+                    const currentDist = getTouchDist(e.touches);
+                    const ratio = currentDist / initialPinchDist;
+                    st.scale = Math.max(1, Math.min(5, initialScale * ratio));
+                    updateZoomTransform(key, true);
+                } else if (e.touches.length === 1 && isDragging && st.scale > 1.01) {
+                    e.preventDefault();
+                    const nx = e.touches[0].clientX - startX;
+                    const ny = e.touches[0].clientY - startY;
+                    movedDistance += Math.hypot(nx - st.x, ny - st.y);
+                    st.x = nx;
+                    st.y = ny;
+                    updateZoomTransform(key, true);
+                } else if (e.touches.length === 1) {
+                    movedDistance += 10;
+                }
+            }, { passive: false });
+
+            vp.addEventListener('touchend', (e) => {
+                if (e.touches.length < 2) {
+                    initialPinchDist = null;
+                }
+                if (e.touches.length === 0) {
+                    isDragging = false;
+                    if (st.scale <= 1.02) {
+                        window.resetImageZoom(key);
+                    } else {
+                        updateZoomTransform(key, false);
+                    }
+                    // แตะที่รูป 1 ครั้ง (เมื่อยังไม่ได้ซูม) เพื่อขยายเต็มจอทันที
+                    const elapsed = Date.now() - touchStartTime;
+                    if (key !== 'fs' && st.scale === 1 && movedDistance < 8 && elapsed < 280) {
+                        window.openFullscreenZoom(key);
+                    }
+                }
+            });
+
+            // Mouse Wheel & Drag Events (สำหรับใช้งานบนคอมพิวเตอร์)
+            vp.addEventListener('wheel', (e) => {
+                const imgEl = document.getElementById(st.imgId);
+                if (!imgEl || imgEl.classList.contains('hidden') || !imgEl.getAttribute('src')) return;
+                e.preventDefault();
+                const delta = e.deltaY < 0 ? 0.2 : -0.2;
+                window.stepZoom(key, delta);
+            }, { passive: false });
+
+            vp.addEventListener('mousedown', (e) => {
+                const imgEl = document.getElementById(st.imgId);
+                if (!imgEl || imgEl.classList.contains('hidden') || !imgEl.getAttribute('src')) return;
+                movedDistance = 0;
+                if (st.scale > 1.01) {
+                    e.preventDefault();
+                    isDragging = true;
+                    startX = e.clientX - st.x;
+                    startY = e.clientY - st.y;
+                }
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const nx = e.clientX - startX;
+                const ny = e.clientY - startY;
+                movedDistance += Math.hypot(nx - st.x, ny - st.y);
+                st.x = nx;
+                st.y = ny;
+                updateZoomTransform(key, true);
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isDragging) {
+                    isDragging = false;
+                    updateZoomTransform(key, false);
+                }
+            });
+
+            vp.addEventListener('click', (e) => {
+                const imgEl = document.getElementById(st.imgId);
+                if (!imgEl || imgEl.classList.contains('hidden') || !imgEl.getAttribute('src')) return;
+                if (key !== 'fs' && st.scale === 1 && movedDistance < 5) {
+                    window.openFullscreenZoom(key);
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            attachInteractiveZoomEvents('in');
+            attachInteractiveZoomEvents('out');
+            attachInteractiveZoomEvents('fs');
+        });
+
         function buildCycleOptions() {
-            const cycles = []; let y = 2026, m = 9;
+            const cycles = [];
+            let y = 2026, m = 9;
             for (let i = 0; i < 36; i++) {
                 let prevM = m - 1; let prevY = y;
                 if (prevM === 0) { prevM = 12; prevY = y - 1; }
                 const val = `${y}-${String(m).padStart(2, '0')}`;
                 const thaiY = (y + 543) % 100; const thaiPrevY = (prevY + 543) % 100;
+                
                 cycles.push({
                     index: i, value: val,
                     label: `รอบ 16 ${THAI_MONTHS_SHORT[prevM]} ${thaiPrevY} - 15 ${THAI_MONTHS_SHORT[m]} ${thaiY} (${THAI_MONTHS_FULL[m]} ${y + 543})`,
@@ -1258,7 +1522,10 @@
         const ALL_CYCLES = buildCycleOptions();
 
         function getAutoCurrentCycleValue() {
-            const now = new Date(); let y = now.getFullYear(); let m = now.getMonth() + 1; let d = now.getDate();
+            const now = new Date();
+            let y = now.getFullYear();
+            let m = now.getMonth() + 1;
+            let d = now.getDate();
             if (d >= 16) { m = m + 1; if (m > 12) { m = 1; y++; } }
             return `${y}-${String(m).padStart(2, '0')}`;
         }
@@ -1270,13 +1537,103 @@
         function populateCycleDropdowns() {
             const dropdowns = document.querySelectorAll('.dynamic-cycle-dropdown');
             const autoCycle = getAutoCurrentCycleValue();
+            
             dropdowns.forEach(sel => {
-                const isSelectedBefore = sel.value; sel.innerHTML = '';
+                const isSelectedBefore = sel.value;
+                sel.innerHTML = '';
                 ALL_CYCLES.forEach(c => {
-                    const opt = document.createElement('option'); opt.value = c.value; opt.textContent = c.label;
-                    if (c.value === autoCycle) opt.selected = true; sel.appendChild(opt);
+                    const opt = document.createElement('option');
+                    opt.value = c.value;
+                    opt.textContent = c.label;
+                    if (c.value === autoCycle) opt.selected = true;
+                    sel.appendChild(opt);
                 });
                 if(isSelectedBefore && isSelectedBefore !== "") sel.value = isSelectedBefore;
+            });
+        }
+
+        function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const dLat = (lat2-lat1) * (Math.PI/180);
+            const dLon = (lon2-lon1) * (Math.PI/180);
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180)) * Math.cos(lat2*(Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function startGPS() {
+            if(!navigator.geolocation) return;
+            gpsWatchId = navigator.geolocation.watchPosition(
+                (pos) => {
+                    currentLat = pos.coords.latitude;
+                    currentLon = pos.coords.longitude;
+                    currentDistance = getDistanceFromLatLonInM(TARGET_LAT, TARGET_LON, currentLat, currentLon);
+                },
+                (err) => {
+                    currentDistance = Infinity;
+                },
+                { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+            );
+        }
+
+        function stopGPS() {
+            if(gpsWatchId !== null && navigator.geolocation) {
+                navigator.geolocation.clearWatch(gpsWatchId);
+                gpsWatchId = null;
+            }
+        }
+
+        function compressImage(file, quality = 0.55, stampText = null) {
+            return new Promise((resolve, reject) => {
+                if (!file) return reject("No file provided");
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        const maxWidth = 800;
+                        const maxHeight = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+                        if (height > maxHeight) {
+                            width = Math.round((width * maxHeight) / height);
+                            height = maxHeight;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        if(stampText) {
+                            const fontSize = Math.max(14, Math.floor(width * 0.035));
+                            ctx.font = `bold ${fontSize}px "Sarabun", sans-serif`;
+                            const textWidth = ctx.measureText(stampText).width;
+                            const pad = fontSize * 0.6;
+
+                            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+                            ctx.fillRect(width - textWidth - (pad*2.5), height - fontSize - (pad*2.5), textWidth + (pad*2.5), fontSize + (pad*2.5));
+
+                            ctx.fillStyle = "#ffffff";
+                            ctx.textAlign = "right";
+                            ctx.textBaseline = "bottom";
+                            ctx.fillText(stampText, width - pad, height - pad);
+                        }
+                        
+                        const dataUrl = canvas.toDataURL('image/webp', quality);
+                        resolve(dataUrl);
+                    };
+                    img.onerror = reject;
+                    img.src = event.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
             });
         }
 
@@ -1286,23 +1643,29 @@
 
         window.showCustomModal = function(message, isConfirm = false, onConfirm = null) {
             const modal = document.getElementById('customModal');
-            document.getElementById('modalMessage').innerHTML = message;
-            modal.classList.remove('hidden');
+            const msgEl = document.getElementById('modalMessage');
             const btnCancel = document.getElementById('modalBtnCancel');
             const btnConfirm = document.getElementById('modalBtnConfirm');
+
+            msgEl.innerHTML = message;
+            modal.classList.remove('hidden');
+
+            const newBtnConfirm = btnConfirm.cloneNode(true);
+            btnConfirm.parentNode.replaceChild(newBtnConfirm, btnConfirm);
+            const newBtnCancel = btnCancel.cloneNode(true);
+            btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+
             if (isConfirm) {
-                btnCancel.classList.remove('hidden');
-                btnCancel.onclick = () => { modal.classList.add('hidden'); };
-                btnConfirm.onclick = () => { modal.classList.add('hidden'); if(onConfirm) onConfirm(); };
+                newBtnCancel.classList.remove('hidden');
+                newBtnCancel.onclick = () => { modal.classList.add('hidden'); };
+                newBtnConfirm.onclick = () => { modal.classList.add('hidden'); if(onConfirm) onConfirm(); };
             } else {
-                btnCancel.classList.add('hidden');
-                btnConfirm.onclick = () => { modal.classList.add('hidden'); };
+                newBtnCancel.classList.add('hidden');
+                newBtnConfirm.onclick = () => { modal.classList.add('hidden'); };
             }
         };
 
-        function isCurrentUserAdmin() { 
-            return currentUserRole === 'admin' || window.allRoles[currentUserRole] === 'admin'; 
-        }
+        function isCurrentUserAdmin() { return currentUserRole === 'admin' || window.allRoles[currentUserRole] === 'admin'; }
         window.isCurrentUserAdmin = isCurrentUserAdmin;
 
         function checkLoginStatus() {
@@ -1325,12 +1688,8 @@
             const p = document.getElementById('loginPassword').value;
             const err = document.getElementById('loginError');
             
-            // 🔥 ตรวจสอบแอดมินทันที ป้องกันการล็อกจากระบบ
             if (u.toLowerCase() === ADMIN_USERNAME && p === ADMIN_PASSWORD) {
-                err.classList.add('hidden'); 
-                safeSetStorage('timeAttendanceUser', 'admin'); 
-                proceedToApp('admin'); 
-                return;
+                err.classList.add('hidden'); safeSetStorage('timeAttendanceUser', 'admin'); proceedToApp('admin'); return;
             }
             if (window.allEmployees[u]) {
                 const correctPass = window.allPasswords[u] || '123';
@@ -1343,18 +1702,16 @@
             }
             err.textContent = "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!"; err.classList.remove('hidden');
         }
-        window.handleLoginSubmit = handleLoginSubmit;
 
         function handleLogout() {
             window.showCustomModal('คุณต้องการออกจากระบบใช่หรือไม่?', true, () => {
                 safeRemoveStorage('timeAttendanceUser'); 
-                clearInterval(clockInterval);
+                clearInterval(clockInterval); stopGPS();
                 currentUserRole = null; isSlipEditMode = false;
                 document.getElementById('loginUsername').value = ''; document.getElementById('loginPassword').value = '';
                 checkLoginStatus();
             });
         }
-        window.handleLogout = handleLogout;
 
         function proceedToApp(role) {
             currentUserRole = role;
@@ -1367,7 +1724,8 @@
         function updateEmployeeDropdowns() {
             const empSelects = document.querySelectorAll('.dynamic-emp-dropdown');
             empSelects.forEach(sel => {
-                const oldVal = sel.value; sel.innerHTML = '';
+                const oldVal = sel.value;
+                sel.innerHTML = '';
                 Object.keys(window.allEmployees).forEach(id => {
                     sel.innerHTML += `<option value="${id}">${id} - ${window.allEmployees[id]}</option>`;
                 });
@@ -1406,7 +1764,7 @@
                 });
                 ['btnAdminEditSlip', 'btnAdminResetSlip'].forEach(id => document.getElementById(id).classList.remove('hidden'));
                 
-                clearInterval(clockInterval);
+                clearInterval(clockInterval); stopGPS();
                 switchTab('entry');
             } else {
                 document.getElementById('adminEntryView').classList.add('hidden'); 
@@ -1419,7 +1777,7 @@
                 });
                 ['btnAdminEditSlip', 'btnAdminResetSlip'].forEach(id => document.getElementById(id).classList.add('hidden'));
                 
-                startClock();
+                startClock(); startGPS();
                 switchTab('entry');
             }
         }
@@ -1428,11 +1786,13 @@
             const rE = document.getElementById('employeeSelect'), sE = document.getElementById('slipEmployeeSelect');
             const rC = document.getElementById('cycleSelect'), sC = document.getElementById('slipCycleSelect');
             if (source === 'report') { 
-                if(sE) sE.value = rE.value; if(sC) sC.value = rC.value; 
+                if(sE) sE.value = rE.value; 
+                if(sC) sC.value = rC.value; 
                 if(typeof window.subscribeToCycleLogs === 'function') window.subscribeToCycleLogs(rC.value);
                 window.renderReport(); 
             } else if (source === 'slip') { 
-                if(rE) rE.value = sE.value; if(rC) rC.value = sC.value; 
+                if(rE) rE.value = sE.value; 
+                if(rC) rC.value = sC.value; 
                 if(isSlipEditMode) exitSlipEditMode(); 
                 if(typeof window.subscribeToCycleLogs === 'function') window.subscribeToCycleLogs(sC.value);
                 window.renderSlip(); 
@@ -1459,8 +1819,17 @@
             if(tabId === 'entry') {
                 if(!isCurrentUserAdmin()) {
                     if(tHead) tHead.classList.add('hidden');
-                    startClock();
+                    startGPS();
+                    if(typeof window.subscribeToCycleLogs === 'function') window.subscribeToCycleLogs(getAutoCurrentCycleValue());
+                } else {
+                    stopGPS();
+                    const dateInput = document.getElementById('inputDate');
+                    if (dateInput && dateInput.value && typeof window.subscribeToCycleLogs === 'function') {
+                        window.subscribeToCycleLogs(window.getCycleKeyFromDate(dateInput.value));
+                    }
                 }
+            } else {
+                stopGPS();
             }
 
             if(tabId === 'report') {
@@ -1477,21 +1846,249 @@
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        window.switchTab = switchTab;
 
         function startClock() {
             clearInterval(clockInterval);
             const update = () => {
                 const now = new Date();
-                const clockEl = document.getElementById('liveClock');
-                const dateEl = document.getElementById('liveDate');
-                if(clockEl) clockEl.textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
-                if(dateEl) dateEl.textContent = now.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                document.getElementById('liveClock').textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+                document.getElementById('liveDate').textContent = now.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             };
             update();
             clockInterval = setInterval(update, 1000);
         }
 
+        let pendingRealtimeType = null;
+
+        window.initiateRealtimeClock = function(type) {
+            if(currentDistance === null) {
+                window.showCustomModal('กำลังค้นหาสัญญาณ GPS กรุณารอสักครู่...');
+                return;
+            }
+            if(currentDistance > MAX_DISTANCE_METERS) {
+                window.showCustomModal(`คุณอยู่นอกพื้นที่ที่กำหนด ไม่สามารถลงเวลาได้<br><span class="text-sm text-gray-500">(ห่างจากจุดทำงาน ${Math.round(currentDistance)} เมตร)</span>`);
+                return;
+            }
+            pendingRealtimeType = type;
+            document.getElementById('empRealtimePhotoInput').click();
+        };
+
+        window.processRealtimePhoto = async function(event) {
+            const file = event.target.files[0];
+            event.target.value = '';
+            if(!file || !pendingRealtimeType) return;
+
+            window.showCustomModal('<div class="spinner mx-auto mb-2"></div> กำลังบีบอัดรูปภาพและบันทึกเวลา...');
+            
+            try {
+                const now = new Date();
+                const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
+                const dateStrThai = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+                
+                const watermarkText = `${dateStrThai} ${timeStr} น.`;
+                const base64Image = await compressImage(file, 0.55, watermarkText);
+                
+                let targetDateISO = todayISO; 
+                if (pendingRealtimeType === 'out') {
+                    let yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
+                    let yesterdayISO = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+                    let yesterdayRecord = window.allRecords.find(r => r.empId === currentUserRole && r.date === yesterdayISO && r.in && r.in !== '-' && (!r.out || r.out === '-'));
+                    if (yesterdayRecord) targetDateISO = yesterdayISO;
+                }
+                
+                let existingRecord = window.allRecords.find(r => r.empId === currentUserRole && r.date === targetDateISO) || {};
+
+                let recordToSave = {
+                    empId: currentUserRole, name: window.allEmployees[currentUserRole],
+                    date: targetDateISO, 
+                    status: ['OT', 'holiday_work'].includes(existingRecord.status) ? existingRecord.status : 'work',
+                    note: existingRecord.note || '' 
+                };
+
+                if (pendingRealtimeType === 'in') {
+                    recordToSave.in = timeStr;
+                    recordToSave.photoIn = base64Image;
+                    recordToSave.latIn = currentLat; recordToSave.lngIn = currentLon;
+                    if(existingRecord.out) { recordToSave.out = existingRecord.out; recordToSave.photoOut = existingRecord.photoOut || null; } 
+                } else {
+                    recordToSave.out = timeStr;
+                    recordToSave.photoOut = base64Image;
+                    recordToSave.latOut = currentLat; recordToSave.lngOut = currentLon;
+                    if(existingRecord.in) { recordToSave.in = existingRecord.in; recordToSave.photoIn = existingRecord.photoIn || null; }
+                }
+
+                const success = await window.saveRecordToCloud(recordToSave);
+                if(success) {
+                    let msgDate = (targetDateISO !== todayISO) ? "<br><span class='text-sm text-gray-500'>(บันทึกลงกะของเมื่อวาน)</span>" : "";
+                    window.showCustomModal(`✅ บันทึกเวลา <b>${pendingRealtimeType === 'in' ? 'เข้า' : 'ออก'}งาน</b> สำเร็จ<br>${timeStr} น. ${msgDate}`);
+                } else {
+                    window.showCustomModal('เกิดข้อผิดพลาดในการบันทึกข้อมูลบน Cloud');
+                }
+            } catch (err) {
+                console.error(err);
+                window.showCustomModal('เกิดข้อผิดพลาดในการจัดการรูปภาพ');
+            }
+            pendingRealtimeType = null;
+        };
+
+        let pendingRetroType = null;
+        let adminCurrentRecord = null;
+        
+        window.loadRecordForAdmin = function() {
+            const empId = document.getElementById('inputEmp').value;
+            const dateStr = document.getElementById('inputDate').value;
+            if(!empId || !dateStr) return;
+
+            if (typeof window.getCycleKeyFromDate === 'function' && typeof window.subscribeToCycleLogs === 'function') {
+                const targetCycle = window.getCycleKeyFromDate(dateStr);
+                window.subscribeToCycleLogs(targetCycle);
+            }
+            
+            window.populateAdminFieldsFromLoaded();
+        };
+
+        window.populateAdminFieldsFromLoaded = function() {
+            const empId = document.getElementById('inputEmp').value;
+            const dateStr = document.getElementById('inputDate').value;
+            if(!empId || !dateStr) return;
+
+            adminCurrentRecord = window.allRecords.find(r => r.empId === empId && r.date === dateStr);
+            
+            if(adminCurrentRecord) {
+                document.getElementById('inputStatus').value = adminCurrentRecord.status || 'work';
+                document.getElementById('inputTimeIn').value = (adminCurrentRecord.in && adminCurrentRecord.in !== '-') ? adminCurrentRecord.in : '';
+                document.getElementById('inputTimeOut').value = (adminCurrentRecord.out && adminCurrentRecord.out !== '-') ? adminCurrentRecord.out : '';
+                document.getElementById('inputNote').value = adminCurrentRecord.note || '';
+                
+                if(adminCurrentRecord.photoIn) {
+                    document.getElementById('adminThumbIn').src = adminCurrentRecord.photoIn;
+                    document.getElementById('adminThumbIn').classList.remove('hidden');
+                    document.getElementById('adminClearBtnIn').classList.remove('hidden');
+                } else {
+                    document.getElementById('adminThumbIn').classList.add('hidden');
+                    document.getElementById('adminClearBtnIn').classList.add('hidden');
+                }
+
+                if(adminCurrentRecord.photoOut) {
+                    document.getElementById('adminThumbOut').src = adminCurrentRecord.photoOut;
+                    document.getElementById('adminThumbOut').classList.remove('hidden');
+                    document.getElementById('adminClearBtnOut').classList.remove('hidden');
+                } else {
+                    document.getElementById('adminThumbOut').classList.add('hidden');
+                    document.getElementById('adminClearBtnOut').classList.add('hidden');
+                }
+            } else {
+                document.getElementById('inputStatus').value = 'work';
+                document.getElementById('inputTimeIn').value = '07:00';
+                document.getElementById('inputTimeOut').value = '19:00';
+                document.getElementById('inputNote').value = '';
+                
+                document.getElementById('adminThumbIn').classList.add('hidden');
+                document.getElementById('adminClearBtnIn').classList.add('hidden');
+                document.getElementById('adminThumbOut').classList.add('hidden');
+                document.getElementById('adminClearBtnOut').classList.add('hidden');
+            }
+            toggleTimeInputs();
+        };
+
+        function toggleTimeInputs() {
+            const s = document.getElementById('inputStatus').value;
+            const isWork = s === 'work' || s === 'OT' || s === 'holiday_work';
+            document.querySelectorAll('.time-input').forEach(input => {
+                input.disabled = !isWork;
+                if(!isWork) { input.value = ''; input.classList.replace('bg-emerald-50', 'bg-gray-100'); input.classList.replace('bg-rose-50', 'bg-gray-100'); }
+                else {
+                    if(input.id==='inputTimeIn') input.classList.replace('bg-gray-100', 'bg-emerald-50');
+                    if(input.id==='inputTimeOut') input.classList.replace('bg-gray-100', 'bg-rose-50');
+                }
+            });
+        }
+
+        let pendingAdminPhotoType = null;
+        window.triggerAdminUpload = function(type) {
+            pendingAdminPhotoType = type;
+            document.getElementById('adminPhotoInput').click();
+        };
+
+        window.processAdminPhoto = async function(event) {
+            const file = event.target.files[0];
+            event.target.value = '';
+            if(!file || !pendingAdminPhotoType) return;
+            try {
+                const base64 = await compressImage(file, 0.55);
+                const thumb = document.getElementById(pendingAdminPhotoType === 'in' ? 'adminThumbIn' : 'adminThumbOut');
+                const btn = document.getElementById(pendingAdminPhotoType === 'in' ? 'adminClearBtnIn' : 'adminClearBtnOut');
+                thumb.src = base64; thumb.classList.remove('hidden');
+                btn.classList.remove('hidden');
+                
+                if(!adminCurrentRecord) adminCurrentRecord = {};
+                if(pendingAdminPhotoType === 'in') { adminCurrentRecord.photoIn = base64; adminCurrentRecord.latIn = 'admin'; }
+                else { adminCurrentRecord.photoOut = base64; adminCurrentRecord.latOut = 'admin'; }
+            } catch(e) { window.showCustomModal('บีบอัดรูปไม่สำเร็จ'); }
+        };
+
+        window.clearAdminImg = function(type) {
+            document.getElementById(type === 'in' ? 'adminThumbIn' : 'adminThumbOut').classList.add('hidden');
+            document.getElementById(type === 'in' ? 'adminClearBtnIn' : 'adminClearBtnOut').classList.add('hidden');
+            if(adminCurrentRecord) {
+                if(type === 'in') adminCurrentRecord.photoIn = null;
+                else adminCurrentRecord.photoOut = null;
+            }
+        };
+
+        window.openAdminFullImg = function(type) {
+            const src = document.getElementById(type === 'in' ? 'adminThumbIn' : 'adminThumbOut').src;
+            if(src) {
+                window.resetImageZoom('in');
+                window.resetImageZoom('out');
+                document.getElementById('pvTitle').textContent = `ภาพย้อนหลัง (โดย Admin)`;
+                document.getElementById('pvSubtitle').textContent = document.getElementById('inputDate').value;
+                document.getElementById('pvUploadBtnIn').classList.add('hidden');
+                document.getElementById('pvUploadBtnOut').classList.add('hidden');
+
+                if(type === 'in') {
+                    document.getElementById('pvImgIn').src = src; document.getElementById('pvImgIn').classList.remove('hidden'); document.getElementById('pvNoImgIn').classList.add('hidden');
+                    document.getElementById('pvControlsIn').classList.remove('hidden');
+                    document.getElementById('pvImgOut').classList.add('hidden'); document.getElementById('pvNoImgOut').classList.remove('hidden');
+                    document.getElementById('pvControlsOut').classList.add('hidden');
+                } else {
+                    document.getElementById('pvImgOut').src = src; document.getElementById('pvImgOut').classList.remove('hidden'); document.getElementById('pvNoImgOut').classList.add('hidden');
+                    document.getElementById('pvControlsOut').classList.remove('hidden');
+                    document.getElementById('pvImgIn').classList.add('hidden'); document.getElementById('pvNoImgIn').classList.remove('hidden');
+                    document.getElementById('pvControlsIn').classList.add('hidden');
+                }
+                document.getElementById('photoViewerModal').classList.remove('hidden');
+            }
+        };
+
+        async function handleAdminSubmit(event) {
+            event.preventDefault();
+            const empId = document.getElementById('inputEmp').value;
+            const status = document.getElementById('inputStatus').value;
+            const btn = document.getElementById('btnAdminSave');
+            const isWorkStatus = status === 'work' || status === 'OT' || status === 'holiday_work';
+
+            const recordToSave = {
+                empId: empId, name: window.allEmployees[empId], date: document.getElementById('inputDate').value,
+                in: isWorkStatus ? document.getElementById('inputTimeIn').value : '-',
+                out: isWorkStatus ? document.getElementById('inputTimeOut').value : '-',
+                status: status, note: document.getElementById('inputNote').value
+            };
+
+            if(adminCurrentRecord) {
+                recordToSave.photoIn = adminCurrentRecord.photoIn || null;
+                recordToSave.photoOut = adminCurrentRecord.photoOut || null;
+            }
+
+            btn.textContent = "กำลังบันทึก..."; btn.disabled = true;
+            const success = await window.saveRecordToCloud(recordToSave);
+            btn.textContent = "บันทึกข้อมูลลงระบบ"; btn.disabled = false;
+
+            if(success) window.showCustomModal(status === 'reset' ? "ล้างข้อมูลเรียบร้อยแล้ว" : "บันทึกข้อมูลเรียบร้อยแล้ว");
+        }
+
+        function getThaiDay(dateStr) { const days = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.']; return days[new Date(dateStr).getDay()]; }
         function calculateHours(timeIn, timeOut) {
             if (!timeIn || !timeOut || timeIn === '-' || timeOut === '-') return 0;
             let [inH, inM] = timeIn.split(':').map(Number); let [outH, outM] = timeOut.split(':').map(Number);
@@ -1520,7 +2117,30 @@
             return { dateArray, workDays, workBaseHrs, workOtHrs, sevenDays, sevenBaseHrs, sevenOtHrs, holWorkDays, holBaseHrs, holOtHrs, leaveDays, totalHours };
         }
 
-        function formatMoney(val, showZero = false) { const num = parseFloat(val) || 0; return (num === 0 && !showZero) ? '' : num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+        window.syncCurrentCycleSummaryCache = function(cycleVal) {
+            if (!cycleVal || Object.keys(window.allEmployees).length === 0) return;
+            Object.keys(window.allEmployees).forEach(empId => {
+                const stats = getAttendanceStatsForCycle(empId, cycleVal);
+                const wRate = DEFAULT_WAGE_RATE;
+                const baseIncome = (stats.workBaseHrs * wRate) + (stats.workOtHrs * wRate * OT_MULTIPLIER);
+                const sevenIncome = (stats.sevenBaseHrs * wRate * 2.0) + (stats.sevenOtHrs * wRate * 2.5);
+                const holIncome = (stats.holBaseHrs * wRate * 2.0) + (stats.holOtHrs * wRate * 2.5);
+                const autoIncome = Math.round((baseIncome + sevenIncome + holIncome) * 100) / 100;
+                const ssoBaseHrs = stats.workBaseHrs + stats.sevenBaseHrs + stats.holBaseHrs;
+                const autoSso = Math.min(750, Math.round((ssoBaseHrs * wRate) * 0.05));
+
+                const docId = `${empId}_${cycleVal}`;
+                const existing = window.allPayslips[docId];
+                if (!existing || (!existing.isManualOverride && (existing.autoIncome !== autoIncome || existing.autoSso !== autoSso))) {
+                    if (autoIncome > 0 || existing) {
+                        window.savePayslipCloud(docId, {
+                            empId, cycleVal,
+                            autoIncome, autoSso, autoTax: 0
+                        });
+                    }
+                }
+            });
+        };
 
         window.renderReport = function() {
             if (!window.allRecords || Object.keys(window.allEmployees).length === 0) return;
@@ -1543,7 +2163,7 @@
 
             stats.dateArray.forEach(dStr => {
                 let r = window.allRecords.find(rec => rec.empId === empId && rec.date === dStr);
-                let dateDisplay = `${dStr.split('-')[2]}/${dStr.split('-')[1]}`;
+                let dateDisplay = `${dStr.split('-')[2]}/${dStr.split('-')[1]} (${getThaiDay(dStr)})`;
 
                 if (!r || r.status === 'reset') {
                     tbody.innerHTML += `<tr class="border-b text-gray-400">
@@ -1554,30 +2174,146 @@
                     let hrs = calculateHours(r.in, r.out);
                     let hasPhoto = r.photoIn || r.photoOut;
                     const safeDate = `'${dStr}'`;
-                    let photoBtn = `<button onclick="openPhotoViewer('${empId}', ${safeDate})" class="bg-blue-50 text-blue-600 hover:bg-blue-100 p-1 rounded border text-xs font-semibold w-full flex items-center justify-center gap-1"><span>${hasPhoto ? '🖼️' : '📎'}</span></button>`;
+                    
+                    let photoBtn = `<button onclick="openPhotoViewer('${empId}', ${safeDate})" class="bg-blue-50 text-blue-600 hover:bg-blue-100 p-1.5 rounded-lg transition-colors border border-blue-200 text-xs font-semibold shadow-sm w-full flex items-center justify-center gap-1"><span class="text-base">${hasPhoto ? '🖼️' : '📎'}</span> ${hasPhoto ? 'ดูรูป' : 'แนบรูป'}</button>`;
 
-                    tbody.innerHTML += `<tr class="border-b ${r.status!=='work'&&r.status!=='OT'&&r.status!=='holiday_work' ? 'bg-orange-50' : ''}">
+                    tbody.innerHTML += `<tr class="border-b ${r.status!=='work'&&r.status!=='OT'&&r.status!=='holiday_work' ? 'bg-orange-50' : (r.status==='OT'?'bg-indigo-50': (r.status==='holiday_work'?'bg-purple-50':''))}">
                         <td class="border border-gray-400">${dateDisplay}</td>
-                        <td class="border border-gray-400 font-medium">${r.in || '-'}</td>
-                        <td class="border border-gray-400 font-medium">${r.out || '-'}</td>
+                        <td class="border border-gray-400 font-medium ${r.in !== '-' ? 'text-emerald-700' : ''}">${r.in || '-'}</td>
+                        <td class="border border-gray-400 font-medium ${r.out !== '-' ? 'text-rose-700' : ''}">${r.out || '-'}</td>
                         <td class="border border-gray-400 bg-blue-50 font-bold">${hrs > 0 ? hrs.toFixed(1) : '-'}</td>
                         <td class="border border-gray-400 font-semibold">${STATUS_LABELS[r.status] || r.status}</td>
                         <td class="border border-gray-400 p-1 no-print">${photoBtn}</td>
-                        <td class="border border-gray-400 text-left px-2 truncate text-xs">${r.note || ''}</td>
+                        <td class="border border-gray-400 text-left px-2 truncate max-w-[120px] text-xs">${r.note || ''}</td>
                     </tr>`;
                 }
             });
 
             document.getElementById('sumWorkDays').textContent = stats.workDays; 
             document.getElementById('sum7Days').textContent = stats.sevenDays + stats.holWorkDays;
-            document.getElementById('sumTotalHours').textContent = stats.totalHours.toFixed(1); 
-            document.getElementById('sumLeaveDays').textContent = stats.leaveDays;
+            document.getElementById('sumTotalHours').textContent = stats.totalHours.toFixed(1); document.getElementById('sumLeaveDays').textContent = stats.leaveDays;
+        };
+
+        let currentViewerEmpId = null;
+        let currentViewerDate = null;
+
+        window.openPhotoViewer = function(empId, dateStr) {
+            currentViewerEmpId = empId;
+            currentViewerDate = dateStr;
+
+            let r = window.allRecords.find(rec => rec.empId === empId && rec.date === dateStr);
+            if(!r) return;
+
+            window.resetImageZoom('in');
+            window.resetImageZoom('out');
+
+            document.getElementById('pvUploadBtnIn').classList.remove('hidden');
+            document.getElementById('pvUploadBtnOut').classList.remove('hidden');
+
+            document.getElementById('pvTitle').textContent = `ภาพถ่ายบันทึกเวลา (${window.allEmployees[empId]})`;
+            document.getElementById('pvSubtitle').textContent = `วันที่ ${dateStr.split('-')[2]}/${dateStr.split('-')[1]}/${dateStr.split('-')[0]}`;
+
+            document.getElementById('pvTimeIn').textContent = r.in && r.in !== '-' ? `(${r.in} น.)` : '(--:--)';
+            if(r.photoIn) {
+                document.getElementById('pvImgIn').src = r.photoIn;
+                document.getElementById('pvImgIn').classList.remove('hidden');
+                document.getElementById('pvNoImgIn').classList.add('hidden');
+                document.getElementById('pvControlsIn').classList.remove('hidden');
+            } else {
+                document.getElementById('pvImgIn').src = '';
+                document.getElementById('pvImgIn').classList.add('hidden');
+                document.getElementById('pvNoImgIn').classList.remove('hidden');
+                document.getElementById('pvControlsIn').classList.add('hidden');
+            }
+
+            document.getElementById('pvTimeOut').textContent = r.out && r.out !== '-' ? `(${r.out} น.)` : '(--:--)';
+            if(r.photoOut) {
+                document.getElementById('pvImgOut').src = r.photoOut;
+                document.getElementById('pvImgOut').classList.remove('hidden');
+                document.getElementById('pvNoImgOut').classList.add('hidden');
+                document.getElementById('pvControlsOut').classList.remove('hidden');
+            } else {
+                document.getElementById('pvImgOut').src = '';
+                document.getElementById('pvImgOut').classList.add('hidden');
+                document.getElementById('pvNoImgOut').classList.remove('hidden');
+                document.getElementById('pvControlsOut').classList.add('hidden');
+            }
+
+            document.getElementById('photoViewerModal').classList.remove('hidden');
+        };
+
+        window.closePhotoViewer = function() {
+            document.getElementById('photoViewerModal').classList.add('hidden');
+            window.closeFullscreenZoom();
+            window.resetImageZoom('in');
+            window.resetImageZoom('out');
+            currentViewerEmpId = null;
+            currentViewerDate = null;
+        };
+
+        window.triggerReportPhotoUpload = function(type) {
+            if(!currentViewerDate || !currentViewerEmpId) return;
+            pendingRetroType = type;
+            document.getElementById('empRetroPhotoInput').click();
+        };
+
+        window.processRetroPhoto = async function(event) {
+            const file = event.target.files[0];
+            event.target.value = '';
+            if(!file || !pendingRetroType || !currentViewerDate) return;
+
+            const targetDateISO = currentViewerDate;
+            const targetEmpId = currentViewerEmpId || currentUserRole;
+            window.showCustomModal('<div class="spinner mx-auto mb-2"></div> กำลังบีบอัดและอัปโหลดรูปภาพ...');
+
+            try {
+                const base64Image = await compressImage(file, 0.55);
+                let existingRecord = window.allRecords.find(r => r.empId === targetEmpId && r.date === targetDateISO) || {};
+
+                let recordToSave = {
+                    empId: targetEmpId, name: window.allEmployees[targetEmpId],
+                    date: targetDateISO, 
+                    status: existingRecord.status || 'work', 
+                    in: existingRecord.in || '-', out: existingRecord.out || '-', 
+                    note: existingRecord.note || ''
+                };
+
+                if(existingRecord.photoIn) recordToSave.photoIn = existingRecord.photoIn;
+                if(existingRecord.photoOut) recordToSave.photoOut = existingRecord.photoOut;
+
+                if (pendingRetroType === 'in') { recordToSave.photoIn = base64Image; recordToSave.latIn = 'retro'; }
+                else { recordToSave.photoOut = base64Image; recordToSave.latOut = 'retro'; }
+
+                const success = await window.saveRecordToCloud(recordToSave);
+                if(success) {
+                    window.showCustomModal(`✅ แนบภาพ <b>${pendingRetroType === 'in' ? 'เข้า' : 'ออก'}งาน</b> สำเร็จ`);
+                    if (pendingRetroType === 'in') {
+                        window.resetImageZoom('in');
+                        document.getElementById('pvImgIn').src = base64Image;
+                        document.getElementById('pvImgIn').classList.remove('hidden');
+                        document.getElementById('pvNoImgIn').classList.add('hidden');
+                        document.getElementById('pvControlsIn').classList.remove('hidden');
+                    } else {
+                        window.resetImageZoom('out');
+                        document.getElementById('pvImgOut').src = base64Image;
+                        document.getElementById('pvImgOut').classList.remove('hidden');
+                        document.getElementById('pvNoImgOut').classList.add('hidden');
+                        document.getElementById('pvControlsOut').classList.remove('hidden');
+                    }
+                    window.renderReport(); 
+                }
+                else window.showCustomModal('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            } catch (e) {
+                console.error(e); window.showCustomModal('บีบอัดภาพไม่สำเร็จ');
+            }
+            pendingRetroType = null;
         };
 
         const SLIP_NUMERIC_FIELDS = ['salary', 'ot', 'holidayWage', 'holidayOt', 'weeklyOff', 'weeklyOffOt', 'langTel', 'housingA', 'positionA', 'incentive', 'spA', 'accrued', 'transport', 'otherIncome', 'bonus', 'maternity', 'personalLeave', 'vacationLeave', 'shiftA', 'sickLeave', 'food', 'tax', 'sso', 'advance', 'uniform', 'accessory', 'license', 'otherDed', 'penalty', 'studentLoan', 'lifeIns', 'advExpress', 'lossDamage', 'lateAbsence', 'housingFee', 'ytdIncome', 'ytdTax', 'ytdSso', 'totalHours', 'wageRate'];
         const SLIP_TEXT_FIELDS = ['periodNo', 'payDate', 'empType', 'zone', 'dept', 'bankName', 'bankAcc'];
         const INCOME_KEYS = ['salary', 'ot', 'holidayWage', 'holidayOt', 'weeklyOff', 'weeklyOffOt', 'langTel', 'housingA', 'positionA', 'incentive', 'spA', 'accrued', 'transport', 'otherIncome', 'bonus', 'maternity', 'personalLeave', 'vacationLeave', 'shiftA', 'sickLeave', 'food'];
         const DEDUCTION_KEYS = ['tax', 'sso', 'advance', 'uniform', 'accessory', 'license', 'otherDed', 'penalty', 'studentLoan', 'lifeIns', 'advExpress', 'lossDamage', 'lateAbsence', 'housingFee'];
+        const INITIAL_CARRY_OVER = { 'A03306': { income: 617.50, tax: 0.00, sso: 83.00 } };
 
         function calculateQuotaDeduction(cycleVal) {
             const meta = getCycleMeta(cycleVal); const idx = meta.index;
@@ -1587,6 +2323,41 @@
             else if (idx > 15) { installmentNo = 15; licenseAcc = LICENSE_TOTAL_QUOTA; uniformAcc = UNIFORM_TOTAL_QUOTA; }
             return { installmentNo, licenseDed, uniformDed, licenseAcc, licenseRem: Math.max(0, LICENSE_TOTAL_QUOTA - licenseAcc), uniformAcc, uniformRem: Math.max(0, UNIFORM_TOTAL_QUOTA - uniformAcc) };
         }
+
+        function getSingleCycleFinancials(empId, cycleVal) {
+            const docId = `${empId}_${cycleVal}`; const savedSlip = window.allPayslips[docId];
+            if (savedSlip) {
+                if (savedSlip.isManualOverride || savedSlip.salary !== undefined) {
+                    let inc = 0; INCOME_KEYS.forEach(k => { inc += (parseFloat(savedSlip[k]) || 0); });
+                    return { income: inc, tax: parseFloat(savedSlip.tax)||0, sso: parseFloat(savedSlip.sso)||0 };
+                }
+                if (savedSlip.autoIncome !== undefined) {
+                    return { income: parseFloat(savedSlip.autoIncome)||0, tax: parseFloat(savedSlip.autoTax)||0, sso: parseFloat(savedSlip.autoSso)||0 };
+                }
+            }
+            const stats = getAttendanceStatsForCycle(empId, cycleVal);
+            const wRate = DEFAULT_WAGE_RATE;
+            const baseIncome = (stats.workBaseHrs * wRate) + (stats.workOtHrs * wRate * OT_MULTIPLIER);
+            const sevenIncome = (stats.sevenBaseHrs * wRate * 2.0) + (stats.sevenOtHrs * wRate * 2.5);
+            const holIncome = (stats.holBaseHrs * wRate * 2.0) + (stats.holOtHrs * wRate * 2.5);
+            const tInc = baseIncome + sevenIncome + holIncome;
+            
+            const ssoBaseHrs = stats.workBaseHrs + stats.sevenBaseHrs + stats.holBaseHrs;
+            const autoSso = Math.min(750, Math.round((ssoBaseHrs * wRate) * 0.05));
+            return { income: tInc, tax: 0, sso: autoSso };
+        }
+
+        function getPriorAccumulatedTotals(empId, targetCycleVal) {
+            const meta = getCycleMeta(targetCycleVal); const carry = INITIAL_CARRY_OVER[empId] || { income: 0, tax: 0, sso: 0 };
+            let accIncome = carry.income, accTax = carry.tax, accSso = carry.sso;
+            for (let i = 0; i < meta.index; i++) {
+                const fin = getSingleCycleFinancials(empId, ALL_CYCLES[i].value);
+                accIncome += fin.income; accTax += fin.tax; accSso += fin.sso;
+            }
+            return { accIncome, accTax, accSso };
+        }
+
+        function formatMoney(val, showZero = false) { const num = parseFloat(val) || 0; return (num === 0 && !showZero) ? '' : num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
         window.renderSlip = function() {
             if (Object.keys(window.allEmployees).length === 0) return;
@@ -1600,16 +2371,24 @@
                 const v = [quota.installmentNo > 0 ? quota.installmentNo : 'ยังไม่เริ่มหัก', quota.licenseDed, quota.licenseAcc, quota.licenseRem, quota.uniformDed, quota.uniformAcc, quota.uniformRem][i];
                 document.getElementById(id).textContent = i === 0 ? v : formatMoney(v, true);
             });
+            document.getElementById('slip_deductionNote').textContent = `สรุปยอดหักสะสม (งวดที่ ${quota.installmentNo}/15): ใบอนุญาต รปภ. หักสะสม ${formatMoney(quota.licenseAcc, true)}/5,000 บ. (คงเหลือ ${formatMoney(quota.licenseRem, true)} บ.) | ค่าเครื่องแบบ หักสะสม ${formatMoney(quota.uniformAcc, true)}/2,500 บ. (คงเหลือ ${formatMoney(quota.uniformRem, true)} บ.)`;
             document.getElementById('slip_periodText').textContent = meta.periodSlash;
-            document.getElementById('slip_empId').textContent = empId; 
-            document.getElementById('slip_empName').textContent = window.allEmployees[empId] || empId;
+            document.getElementById('slip_empId').textContent = empId; document.getElementById('slip_empName').textContent = window.allEmployees[empId] || empId;
 
             const wRate = DEFAULT_WAGE_RATE;
             const ssoBaseHrs = stats.workBaseHrs + stats.sevenBaseHrs + stats.holBaseHrs;
             const autoSso = Math.min(750, Math.round((ssoBaseHrs * wRate) * 0.05));
+            const priorAcc = getPriorAccumulatedTotals(empId, cycleVal);
             
             const docId = `${empId}_${cycleVal}`;
-            const savedSlip = window.allPayslips[docId];
+            const rawSaved = window.allPayslips[docId];
+            const savedSlip = (rawSaved && (rawSaved.isManualOverride || rawSaved.salary !== undefined)) ? rawSaved : null;
+            document.getElementById('badgeCustomOverride').classList[savedSlip ? 'remove' : 'add']('hidden');
+
+            const calculatedYtdIncome = priorAcc.accIncome + 
+                (stats.workBaseHrs * wRate) + (stats.workOtHrs * wRate * OT_MULTIPLIER) + 
+                (stats.sevenBaseHrs * wRate * 2.0) + (stats.sevenOtHrs * wRate * 2.5) + 
+                (stats.holBaseHrs * wRate * 2.0) + (stats.holOtHrs * wRate * 2.5);
 
             const slipData = {
                 periodNo: savedSlip?.periodNo ?? String(meta.periodNo), payDate: savedSlip?.payDate ?? meta.payDateSlash, empType: savedSlip?.empType ?? 'Direct Staff', zone: savedSlip?.zone ?? 'Northern', dept: savedSlip?.dept ?? 'ปฏิบัติการ', bankName: savedSlip?.bankName ?? 'Kasikornbank Public Company Ltd.', bankAcc: savedSlip?.bankAcc ?? (window.allBankAccs[empId] || '00404572163615'),
@@ -1621,7 +2400,11 @@
                 weeklyOffOt: savedSlip?.weeklyOffOt ?? (stats.sevenOtHrs * wRate * 2.5), 
                 langTel: savedSlip?.langTel ?? 0, housingA: savedSlip?.housingA ?? 0, positionA: savedSlip?.positionA ?? 0, incentive: savedSlip?.incentive ?? 0, spA: savedSlip?.spA ?? 0, accrued: savedSlip?.accrued ?? 0, transport: savedSlip?.transport ?? 0, otherIncome: savedSlip?.otherIncome ?? 0, bonus: savedSlip?.bonus ?? 0, maternity: savedSlip?.maternity ?? 0, personalLeave: savedSlip?.personalLeave ?? 0, vacationLeave: savedSlip?.vacationLeave ?? 0, shiftA: savedSlip?.shiftA ?? 0, sickLeave: savedSlip?.sickLeave ?? 0, food: savedSlip?.food ?? DEFAULT_FOOD_ALLOWANCE,
                 tax: savedSlip?.tax ?? 0, sso: savedSlip?.sso ?? autoSso, advance: savedSlip?.advance ?? 0, uniform: savedSlip?.uniform ?? quota.uniformDed, accessory: savedSlip?.accessory ?? 0, license: savedSlip?.license ?? quota.licenseDed, otherDed: savedSlip?.otherDed ?? 0, penalty: savedSlip?.penalty ?? 0, studentLoan: savedSlip?.studentLoan ?? 0, lifeIns: savedSlip?.lifeIns ?? LIFE_INSURANCE_FEE, advExpress: savedSlip?.advExpress ?? 0, lossDamage: savedSlip?.lossDamage ?? 0, lateAbsence: savedSlip?.lateAbsence ?? 0, housingFee: savedSlip?.housingFee ?? 0,
-                ytdIncome: savedSlip?.ytdIncome ?? 0, ytdTax: savedSlip?.ytdTax ?? 0, ytdSso: savedSlip?.ytdSso ?? 0, totalHours: savedSlip?.totalHours ?? stats.totalHours, wageRate: savedSlip?.wageRate ?? wRate
+                ytdIncome: savedSlip?.ytdIncome ?? calculatedYtdIncome, 
+                ytdTax: savedSlip?.ytdTax ?? priorAcc.accTax, 
+                ytdSso: savedSlip?.ytdSso ?? (priorAcc.accSso + autoSso), 
+                totalHours: savedSlip?.totalHours ?? stats.totalHours, 
+                wageRate: savedSlip?.wageRate ?? wRate
             };
 
             SLIP_TEXT_FIELDS.forEach(k => {
@@ -1631,47 +2414,158 @@
             SLIP_NUMERIC_FIELDS.forEach(k => {
                 const val = parseFloat(slipData[k]) || 0;
                 const vEl = document.getElementById(`view_${k}`); const eEl = document.getElementById(`edit_${k}`);
-                if(vEl) vEl.textContent = formatMoney(val, false);
-                if(eEl) eEl.value = val !== 0 ? val.toFixed(2) : '';
+                if(vEl) { if(k==='wageRate') vEl.textContent = val.toFixed(3); else if(['ytdIncome','ytdTax','ytdSso','totalHours'].includes(k)) vEl.textContent = formatMoney(val, true); else vEl.textContent = formatMoney(val, false); }
+                if(eEl) eEl.value = val !== 0 ? (k==='wageRate' ? val.toFixed(3) : val.toFixed(2)) : '';
             });
             recalcSlipTotals(false);
         };
 
-        window.recalcSlipTotals = function() {
+        window.onWageRateChange = function() {
+            const eWage = document.getElementById('edit_wageRate'); const newRate = parseFloat(eWage?.value) || 0;
+            if(document.getElementById('view_wageRate')) document.getElementById('view_wageRate').textContent = newRate.toFixed(3);
+            const empId = isCurrentUserAdmin() ? document.getElementById('slipEmployeeSelect').value : currentUserRole;
+            const cycleVal = document.getElementById('slipCycleSelect').value;
+            if (empId && cycleVal && newRate > 0) {
+                const stats = getAttendanceStatsForCycle(empId, cycleVal);
+                const setField = (key, amount) => { const el = document.getElementById(`edit_${key}`); if(el) el.value = amount > 0 ? amount.toFixed(2) : ''; };
+                setField('salary', stats.workBaseHrs * newRate); 
+                setField('ot', stats.workOtHrs * newRate * OT_MULTIPLIER);
+                setField('weeklyOff', stats.sevenBaseHrs * newRate * 2.0); 
+                setField('weeklyOffOt', stats.sevenOtHrs * newRate * 2.5);
+                setField('holidayWage', stats.holBaseHrs * newRate * 2.0); 
+                setField('holidayOt', stats.holOtHrs * newRate * 2.5);
+                
+                const ssoBaseHrs = stats.workBaseHrs + stats.sevenBaseHrs + stats.holBaseHrs;
+                setField('sso', Math.min(750, Math.round((ssoBaseHrs * newRate) * 0.05)));
+            }
+            window.recalcSlipTotals(true);
+        };
+
+        window.recalcSlipTotals = function(updateYtdAuto = true) {
             let tInc = 0; INCOME_KEYS.forEach(k => { const v = parseFloat(document.getElementById(`edit_${k}`)?.value)||0; tInc+=v; if(document.getElementById(`view_${k}`)) document.getElementById(`view_${k}`).textContent = formatMoney(v, false); });
             let tDed = 0; DEDUCTION_KEYS.forEach(k => { const v = parseFloat(document.getElementById(`edit_${k}`)?.value)||0; tDed+=v; if(document.getElementById(`view_${k}`)) document.getElementById(`view_${k}`).textContent = formatMoney(v, false); });
-            document.getElementById('slip_totalIncome').textContent = formatMoney(tInc, true); 
-            document.getElementById('slip_totalDeduction').textContent = formatMoney(tDed, true); 
-            document.getElementById('slip_netIncome').textContent = formatMoney(tInc - tDed, true);
+            document.getElementById('slip_totalIncome').textContent = formatMoney(tInc, true); document.getElementById('slip_totalDeduction').textContent = formatMoney(tDed, true); document.getElementById('slip_netIncome').textContent = formatMoney(tInc - tDed, true);
+            if (updateYtdAuto) {
+                const empId = isCurrentUserAdmin() ? document.getElementById('slipEmployeeSelect').value : currentUserRole; const cycleVal = document.getElementById('slipCycleSelect').value;
+                if (empId && cycleVal) {
+                    const priorAcc = getPriorAccumulatedTotals(empId, cycleVal);
+                    const nYtdInc = priorAcc.accIncome + tInc, nYtdTax = priorAcc.accTax + (parseFloat(document.getElementById('edit_tax')?.value)||0), nYtdSso = priorAcc.accSso + (parseFloat(document.getElementById('edit_sso')?.value)||0);
+                    ['Income','Tax','Sso'].forEach((k,i) => {
+                        const val = [nYtdInc, nYtdTax, nYtdSso][i];
+                        if(document.getElementById(`edit_ytd${k}`)) document.getElementById(`edit_ytd${k}`).value = val.toFixed(2);
+                        if(document.getElementById(`view_ytd${k}`)) document.getElementById(`view_ytd${k}`).textContent = formatMoney(val, true);
+                    });
+                }
+            }
+        };
+
+        window.toggleSlipEditMode = function() {
+            if (!isCurrentUserAdmin()) return; isSlipEditMode = !isSlipEditMode;
+            document.querySelectorAll('.slip-view-field').forEach(el => el.classList[isSlipEditMode?'add':'remove']('hidden'));
+            document.querySelectorAll('.slip-input').forEach(el => el.classList[isSlipEditMode?'remove':'add']('hidden'));
+            document.getElementById('btnEditSlipText').textContent = isSlipEditMode ? 'ยกเลิกแก้ไข' : 'แก้ไขตัวเลข (HR)';
+            document.getElementById('btnAdminSaveSlip').classList[isSlipEditMode?'remove':'add']('hidden');
+            if(!isSlipEditMode) window.renderSlip();
+        };
+
+        function exitSlipEditMode() { isSlipEditMode = true; window.toggleSlipEditMode(); }
+
+        window.saveSlipOverride = async function() {
+            if (!isCurrentUserAdmin()) return;
+            const empId = document.getElementById('slipEmployeeSelect').value, cycleVal = document.getElementById('slipCycleSelect').value;
+            const dataToSave = { empId, cycleVal, isManualOverride: true, updatedAt: new Date().toISOString() };
+            SLIP_TEXT_FIELDS.forEach(k => dataToSave[k] = document.getElementById(`edit_${k}`)?.value.trim()||'');
+            SLIP_NUMERIC_FIELDS.forEach(k => dataToSave[k] = parseFloat(document.getElementById(`edit_${k}`)?.value)||0);
+            
+            const btnSave = document.getElementById('btnAdminSaveSlip'); btnSave.textContent = 'กำลังบันทึก...'; btnSave.disabled = true;
+            const success = await window.savePayslipCloud(`${empId}_${cycleVal}`, dataToSave);
+            btnSave.innerHTML = '<span>💾</span> บันทึกสลิป'; btnSave.disabled = false;
+            if(success) { exitSlipEditMode(); window.renderSlip(); window.showCustomModal('บันทึกข้อมูลสลิปเงินเดือนเรียบร้อยแล้ว'); }
+        };
+
+        window.resetSlipToAuto = function() {
+            if (!isCurrentUserAdmin()) return;
+            const empId = document.getElementById('slipEmployeeSelect').value, cycleVal = document.getElementById('slipCycleSelect').value;
+            window.showCustomModal('ต้องการล้างค่าที่แก้ไข และกลับไปคำนวณอัตโนมัติใช่หรือไม่?', true, async () => {
+                await window.deletePayslipCloud(`${empId}_${cycleVal}`);
+                exitSlipEditMode(); window.renderSlip(); window.showCustomModal('รีเซ็ตสลิปกลับเป็นค่าคำนวณอัตโนมัติเรียบร้อยแล้ว');
+            });
         };
 
         function renderEmployeeTable() {
             const tbody = document.getElementById('empListTable'); if(!tbody) return; tbody.innerHTML = '';
             Object.keys(window.allEmployees).forEach(id => {
                 const name = window.allEmployees[id], pos = window.allPositions[id]||'-', pass = window.allPasswords[id]||'123', role = window.allRoles[id]==='admin'?'<span class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs">Admin</span>':'<span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">พนักงาน</span>', status = window.allStatuses[id]==='blocked'?'<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">ระงับ</span>':'<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">ปกติ</span>';
-                tbody.innerHTML += `<tr class="border-b hover:bg-gray-50"><td class="px-4 py-3 font-mono text-blue-700 font-semibold">${id}</td><td class="px-4 py-3 font-medium">${name}</td><td class="px-4 py-3 text-gray-600 text-xs">${pos}</td><td class="px-4 py-3 text-center text-gray-500 font-mono text-xs">${pass}</td><td class="px-4 py-3 text-center">${role} ${status}</td><td class="px-4 py-3 text-center whitespace-nowrap"><button onclick="editEmployee('${id}')" class="text-blue-600 bg-blue-50 px-2 py-1 rounded text-xs mr-1">แก้ไข</button><button onclick="deleteEmployeeUi('${id}', this)" class="text-red-600 bg-red-50 px-2 py-1 rounded text-xs">ลบ</button></td></tr>`;
+                tbody.innerHTML += `<tr class="border-b hover:bg-gray-50"><td class="px-4 py-3 font-mono text-blue-700 font-semibold">${id}</td><td class="px-4 py-3 font-medium">${name}</td><td class="px-4 py-3 text-gray-600 text-xs">${pos}</td><td class="px-4 py-3 text-center text-gray-500 font-mono text-xs">${pass}</td><td class="px-4 py-3 text-center space-y-1 sm:space-y-0">${role} ${status}</td><td class="px-4 py-3 text-center whitespace-nowrap"><button onclick="editEmployee('${id}')" class="text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded text-sm mr-1">แก้ไข</button><button onclick="deleteEmployeeUi('${id}', this)" class="text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1 rounded text-sm">ลบ</button></td></tr>`;
             });
         }
         window.renderEmployeeTable = renderEmployeeTable;
 
         window.editEmployee = function(id) {
-            document.getElementById('newEmpId').value = id; document.getElementById('newEmpId').readOnly = true;
-            document.getElementById('newEmpName').value = window.allEmployees[id];
-            document.getElementById('newEmpPosition').value = window.allPositions[id]!=='-'?window.allPositions[id]:'';
-            document.getElementById('newEmpPassword').value = window.allPasswords[id]||'123';
-            document.getElementById('newEmpBankAcc').value = window.allBankAccs[id]||'';
-            document.getElementById('newEmpRole').value = window.allRoles[id]||'employee';
-            document.getElementById('newEmpStatus').value = window.allStatuses[id]||'active';
-            document.getElementById('btnAddEmp').textContent = "💾 บันทึกการแก้ไข";
-        };
+            document.getElementById('newEmpId').value = id; document.getElementById('newEmpId').readOnly = true; document.getElementById('newEmpId').classList.add('bg-gray-200');
+            document.getElementById('newEmpName').value = window.allEmployees[id]; document.getElementById('newEmpPosition').value = window.allPositions[id]!=='-'?window.allPositions[id]:'';
+            document.getElementById('newEmpPassword').value = window.allPasswords[id]||'123'; document.getElementById('newEmpBankAcc').value = window.allBankAccs[id]||'';
+            document.getElementById('newEmpRole').value = window.allRoles[id]||'employee'; document.getElementById('newEmpStatus').value = window.allStatuses[id]||'active';
+            const btn = document.getElementById('btnAddEmp'); btn.textContent = "💾 บันทึกการแก้ไข"; btn.classList.replace('bg-emerald-600', 'bg-blue-600'); window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        let deleteConfirmId = null;
+        window.deleteEmployeeUi = async function(id, btn) {
+            if(deleteConfirmId !== id) {
+                deleteConfirmId = id; const orig = btn.textContent; btn.textContent = "ยืนยันลบ?"; btn.classList.replace('bg-red-50', 'bg-red-500'); btn.classList.replace('text-red-600', 'text-white');
+                setTimeout(() => { if(deleteConfirmId===id) { deleteConfirmId = null; btn.textContent = orig; btn.classList.replace('bg-red-500', 'bg-red-50'); btn.classList.replace('text-white', 'text-red-600'); } }, 3000); return;
+            }
+            deleteConfirmId = null; btn.textContent = "กำลังลบ..."; await window.deleteEmployeeCloud(id);
+        }
 
         window.handleAddEmployee = async function(e) {
             e.preventDefault(); const id = document.getElementById('newEmpId').value.trim(); const name = document.getElementById('newEmpName').value.trim();
-            if(!id || !name) return;
-            await window.saveEmployee(id, name, document.getElementById('newEmpPosition').value.trim(), document.getElementById('newEmpPassword').value.trim(), document.getElementById('newEmpRole').value, document.getElementById('newEmpStatus').value, document.getElementById('newEmpBankAcc').value.trim());
-            document.getElementById('newEmpId').value = ''; document.getElementById('newEmpId').readOnly = false;
-            ['newEmpName', 'newEmpPosition', 'newEmpPassword', 'newEmpBankAcc'].forEach(fid => document.getElementById(fid).value = '');
-            document.getElementById('btnAddEmp').textContent = "+ บันทึกข้อมูลพนักงาน";
+            const btn = document.getElementById('btnAddEmp'); if(!id || !name) return; btn.innerHTML = "กำลังบันทึก..."; btn.disabled = true;
+            const success = await window.saveEmployee(id, name, document.getElementById('newEmpPosition').value.trim(), document.getElementById('newEmpPassword').value.trim(), document.getElementById('newEmpRole').value, document.getElementById('newEmpStatus').value, document.getElementById('newEmpBankAcc').value.trim());
+            if(success) {
+                document.getElementById('newEmpId').value = ''; document.getElementById('newEmpId').readOnly = false; document.getElementById('newEmpId').classList.remove('bg-gray-200');
+                ['newEmpName', 'newEmpPosition', 'newEmpPassword', 'newEmpBankAcc'].forEach(fid => document.getElementById(fid).value = '');
+                document.getElementById('newEmpRole').value = 'employee'; document.getElementById('newEmpStatus').value = 'active';
+                btn.textContent = "+ บันทึกข้อมูลพนักงาน"; btn.classList.replace('bg-blue-600', 'bg-emerald-600');
+            }
+            btn.disabled = false;
+        }
+
+        async function exportElementToPdfClean(sourceEl, targetWidthPx, pdfConfig, btnEl, defaultBtnHtml) {
+            if(btnEl) { btnEl.innerHTML = '<span>⏳</span> กำลังสร้าง PDF...'; btnEl.disabled = true; }
+            const savedScrollY = window.scrollY; const overlayCurtain = document.createElement('div');
+            overlayCurtain.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+            overlayCurtain.innerHTML = '<div class="spinner mb-3"></div><p class="text-indigo-700 font-bold text-sm">กำลังจัดหน้าและสร้างไฟล์ PDF...</p>';
+            
+            const tempWrapper = document.createElement('div'); tempWrapper.style.cssText = `position:absolute;top:0;left:0;width:${targetWidthPx}px;z-index:99990;background:#ffffff;overflow:visible;padding:0;margin:0;`;
+            const cloneEl = sourceEl.cloneNode(true); cloneEl.style.cssText = `margin:0;width:${targetWidthPx}px;min-width:${targetWidthPx}px;max-width:${targetWidthPx}px;box-shadow:none;border-radius:0;`;
+            if (pdfConfig.compactReport) cloneEl.classList.add('pdf-export-compact');
+            cloneEl.querySelectorAll('input.hidden, .hidden').forEach(el => el.remove());
+            tempWrapper.appendChild(cloneEl); document.body.appendChild(overlayCurtain); document.body.appendChild(tempWrapper);
+
+            try {
+                window.scrollTo(0, 0); if (document.fonts && document.fonts.ready) await document.fonts.ready; await new Promise(r => setTimeout(r, 200));
+                let captureWidthPx = targetWidthPx;
+                const renderHeight = cloneEl.scrollHeight, maxOnePageHeightPx = Math.floor(targetWidthPx * ((pdfConfig.orientation === 'landscape' ? 210 : 297) - pdfConfig.margin[0] - pdfConfig.margin[2]) / ((pdfConfig.orientation === 'landscape' ? 297 : 210) - pdfConfig.margin[1] - pdfConfig.margin[3]));
+                if (renderHeight > maxOnePageHeightPx) { captureWidthPx = Math.ceil(renderHeight * ((pdfConfig.orientation === 'landscape' ? 297 : 210) / (pdfConfig.orientation === 'landscape' ? 210 : 297))) + 8; tempWrapper.style.width = captureWidthPx + 'px'; cloneEl.style.margin = '0 auto'; }
+                
+                await html2pdf().set({
+                    margin: pdfConfig.margin, filename: pdfConfig.filename, image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', width: captureWidthPx, windowWidth: captureWidthPx, scrollX: 0, scrollY: 0 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: pdfConfig.orientation }
+                }).from(tempWrapper).save();
+            } catch(e) { window.showCustomModal("เกิดข้อผิดพลาดในการสร้าง PDF"); }
+            finally { if(tempWrapper.parentNode) tempWrapper.remove(); if(overlayCurtain.parentNode) overlayCurtain.remove(); window.scrollTo(0, savedScrollY); if(btnEl) { btnEl.innerHTML = defaultBtnHtml; btnEl.disabled = false; } }
+        }
+
+        window.generatePDF = async function() {
+            const empId = isCurrentUserAdmin() ? document.getElementById('employeeSelect').value : currentUserRole;
+            await exportElementToPdfClean(document.getElementById('reportToPrint'), 794, { margin: [8, 10, 8, 10], filename: `Attendance_${empId}.pdf`, orientation: 'portrait', compactReport: true }, document.getElementById('btnPrintReportPdf'), '<span>📄</span> บันทึกเป็น PDF');
+        };
+        window.generateSlipPDF = async function() {
+            if(isSlipEditMode) exitSlipEditMode();
+            const empId = isCurrentUserAdmin() ? document.getElementById('slipEmployeeSelect').value : currentUserRole;
+            await exportElementToPdfClean(document.getElementById('slipToPrint'), 1020, { margin: [8, 6, 8, 6], filename: `PaySlip_${empId}_${document.getElementById('slipCycleSelect').value}.pdf`, orientation: 'landscape', compactReport: false }, document.getElementById('btnPrintSlipPdf'), '<span>🖨️</span> พิมพ์สลิป PDF');
         };
     </script>
 </body>
