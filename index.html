@@ -2166,29 +2166,61 @@
 
         async function exportElementToPdfClean(sourceEl, targetWidthPx, pdfConfig, btnEl, defaultBtnHtml) {
             if(btnEl) { btnEl.innerHTML = '<span>⏳</span> กำลังสร้าง PDF...'; btnEl.disabled = true; }
-            const savedScrollY = window.scrollY; const overlayCurtain = document.createElement('div');
-            overlayCurtain.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
-            overlayCurtain.innerHTML = '<div class="spinner mb-3"></div><p class="text-indigo-700 font-bold text-sm">กำลังจัดหน้าและสร้างไฟล์ PDF...</p>';
             
-            const tempWrapper = document.createElement('div'); tempWrapper.style.cssText = `position:absolute;top:0;left:0;width:${targetWidthPx}px;z-index:99990;background:#ffffff;overflow:visible;padding:0;margin:0;`;
-            const cloneEl = sourceEl.cloneNode(true); cloneEl.style.cssText = `margin:0;width:${targetWidthPx}px;min-width:${targetWidthPx}px;max-width:${targetWidthPx}px;box-shadow:none;border-radius:0;`;
+            const overlayCurtain = document.createElement('div');
+            overlayCurtain.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.95);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+            overlayCurtain.innerHTML = '<div class="spinner mb-3"></div><p class="text-indigo-700 font-bold text-sm">กำลังจัดเตรียมและสร้างไฟล์ PDF...</p>';
+            document.body.appendChild(overlayCurtain);
+
+            await new Promise(r => setTimeout(r, 50)); 
+            
+            const savedScrollY = window.scrollY; 
+            const tempWrapper = document.createElement('div'); 
+            tempWrapper.style.cssText = `position:absolute;top:0;left:0;width:${targetWidthPx}px;z-index:99990;background:#ffffff;overflow:visible;padding:0;margin:0;`;
+            
+            const cloneEl = sourceEl.cloneNode(true); 
+            cloneEl.style.width = `${targetWidthPx}px`;
+            cloneEl.style.minWidth = `${targetWidthPx}px`;
+            cloneEl.style.maxWidth = `${targetWidthPx}px`;
+            cloneEl.style.margin = '0';
+            cloneEl.style.boxShadow = 'none';
+            
             if (pdfConfig.compactReport) cloneEl.classList.add('pdf-export-compact');
             cloneEl.querySelectorAll('input.hidden, .hidden').forEach(el => el.remove());
-            tempWrapper.appendChild(cloneEl); document.body.appendChild(overlayCurtain); document.body.appendChild(tempWrapper);
+            
+            tempWrapper.appendChild(cloneEl); 
+            document.body.appendChild(tempWrapper);
 
             try {
-                window.scrollTo(0, 0); if (document.fonts && document.fonts.ready) await document.fonts.ready; await new Promise(r => setTimeout(r, 200));
-                let captureWidthPx = targetWidthPx;
-                const renderHeight = cloneEl.scrollHeight, maxOnePageHeightPx = Math.floor(targetWidthPx * ((pdfConfig.orientation === 'landscape' ? 210 : 297) - pdfConfig.margin[0] - pdfConfig.margin[2]) / ((pdfConfig.orientation === 'landscape' ? 297 : 210) - pdfConfig.margin[1] - pdfConfig.margin[3]));
-                if (renderHeight > maxOnePageHeightPx) { captureWidthPx = Math.ceil(renderHeight * ((pdfConfig.orientation === 'landscape' ? 297 : 210) / (pdfConfig.orientation === 'landscape' ? 210 : 297))) + 8; tempWrapper.style.width = captureWidthPx + 'px'; cloneEl.style.margin = '0 auto'; }
+                window.scrollTo(0, 0); 
+                if (document.fonts && document.fonts.ready) await document.fonts.ready; 
+                await new Promise(r => setTimeout(r, 400));
                 
                 await html2pdf().set({
-                    margin: pdfConfig.margin, filename: pdfConfig.filename, image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', width: captureWidthPx, windowWidth: captureWidthPx, scrollX: 0, scrollY: 0 },
+                    margin: pdfConfig.margin, 
+                    filename: pdfConfig.filename, 
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { 
+                        scale: 1.5, // ลด Scale ลงมาที่ 1.5 ป้องกันปัญหาจอขาวเพราะ Canvas Size Limit บนมือถือ
+                        useCORS: true, 
+                        logging: false, 
+                        backgroundColor: '#ffffff', 
+                        width: targetWidthPx, 
+                        windowWidth: targetWidthPx, 
+                        scrollX: 0, 
+                        scrollY: 0 
+                    },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: pdfConfig.orientation }
                 }).from(tempWrapper).save();
-            } catch(e) { window.showCustomModal("เกิดข้อผิดพลาดในการสร้าง PDF"); }
-            finally { if(tempWrapper.parentNode) tempWrapper.remove(); if(overlayCurtain.parentNode) overlayCurtain.remove(); window.scrollTo(0, savedScrollY); if(btnEl) { btnEl.innerHTML = defaultBtnHtml; btnEl.disabled = false; } }
+            } catch(e) { 
+                window.showCustomModal("เกิดข้อผิดพลาดในการสร้าง PDF"); 
+            }
+            finally { 
+                if(tempWrapper.parentNode) tempWrapper.remove(); 
+                if(overlayCurtain.parentNode) overlayCurtain.remove(); 
+                window.scrollTo(0, savedScrollY); 
+                if(btnEl) { btnEl.innerHTML = defaultBtnHtml; btnEl.disabled = false; } 
+            }
         }
 
         window.generatePDF = async function() {
