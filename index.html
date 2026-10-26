@@ -1154,7 +1154,7 @@
             if (!db) return;
             try {
                 const todayStr = new Date().toISOString().split('T')[0];
-                const lastClean = localStorage.getItem('att_last_photo_cleanup');
+                const lastClean = safeGetStorage('att_last_photo_cleanup');
                 if (lastClean === todayStr) return;
 
                 const cutoff = new Date();
@@ -1184,7 +1184,7 @@
                 if (updatePromises.length > 0) {
                     await Promise.all(updatePromises);
                 }
-                localStorage.setItem('att_last_photo_cleanup', todayStr);
+                safeSetStorage('att_last_photo_cleanup', todayStr);
             } catch (e) {
                 console.warn("Auto-cleanup photo warning:", e);
             }
@@ -2531,31 +2531,104 @@
             btn.disabled = false;
         }
 
+        /* ==============================================================
+           ฟังก์ชันสร้าง PDF (แก้ไขปัญหาหน้าขาวทั้งใบรายงานและใบสลิป)
+           - ป้องกัน overlayCurtain บังพื้นที่จับภาพของ html2canvas
+           - ลบ .no-print และ .hidden ออกจาก cloneEl ก่อนเรนเดอร์
+           - ล็อกพิกัด x:0, y:0, scrollX:0, scrollY:0 และซ่อนแผ่นบังใน onclone
+           ============================================================== */
         async function exportElementToPdfClean(sourceEl, targetWidthPx, pdfConfig, btnEl, defaultBtnHtml) {
-            if(btnEl) { btnEl.innerHTML = '<span>⏳</span> กำลังสร้าง PDF...'; btnEl.disabled = true; }
-            const savedScrollY = window.scrollY; const overlayCurtain = document.createElement('div');
-            overlayCurtain.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
+            if (!sourceEl) return;
+            if (btnEl) { btnEl.innerHTML = '<span>⏳</span> กำลังสร้าง PDF...'; btnEl.disabled = true; }
+            const savedScrollY = window.scrollY;
+
+            // สร้างแผ่นบังแจ้งสถานะ (ใส่ data-pdf-curtain เพื่อซ่อนในจังหวะที่ html2canvas จำลอง DOM)
+            const overlayCurtain = document.createElement('div');
+            overlayCurtain.setAttribute('data-pdf-curtain', '1');
+            overlayCurtain.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,0.96);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;';
             overlayCurtain.innerHTML = '<div class="spinner mb-3"></div><p class="text-indigo-700 font-bold text-sm">กำลังจัดหน้าและสร้างไฟล์ PDF...</p>';
-            
-            const tempWrapper = document.createElement('div'); tempWrapper.style.cssText = `position:absolute;top:0;left:0;width:${targetWidthPx}px;z-index:99990;background:#ffffff;overflow:visible;padding:0;margin:0;`;
-            const cloneEl = sourceEl.cloneNode(true); cloneEl.style.cssText = `margin:0;width:${targetWidthPx}px;min-width:${targetWidthPx}px;max-width:${targetWidthPx}px;box-shadow:none;border-radius:0;`;
+
+            // สร้างกล่องจำลองสำหรับเรนเดอร์ PDF ที่พิกัด (0,0)
+            const tempWrapper = document.createElement('div');
+            tempWrapper.setAttribute('data-pdf-capture-root', '1');
+            tempWrapper.style.cssText = `position:absolute;top:0;left:0;width:${targetWidthPx}px;z-index:99990;background:#ffffff;color:#111827;overflow:visible;padding:0;margin:0;`;
+
+            const cloneEl = sourceEl.cloneNode(true);
+            cloneEl.style.cssText = `margin:0 auto;width:${targetWidthPx}px;min-width:${targetWidthPx}px;max-width:${targetWidthPx}px;background:#ffffff;color:#111827;box-shadow:none;border-radius:0;box-sizing:border-box;`;
             if (pdfConfig.compactReport) cloneEl.classList.add('pdf-export-compact');
-            cloneEl.querySelectorAll('input.hidden, .hidden').forEach(el => el.remove());
-            tempWrapper.appendChild(cloneEl); document.body.appendChild(overlayCurtain); document.body.appendChild(tempWrapper);
+
+            // ลบรายการที่ไม่ต้องการให้แสดงใน PDF (.hidden และ .no-print เช่น คอลัมน์ปุ่มดูรูป)
+            cloneEl.querySelectorAll('input.hidden, .hidden, .no-print').forEach(el => el.remove());
+
+            tempWrapper.appendChild(cloneEl);
+            document.body.appendChild(tempWrapper);
+            document.body.appendChild(overlayCurtain);
 
             try {
-                window.scrollTo(0, 0); if (document.fonts && document.fonts.ready) await document.fonts.ready; await new Promise(r => setTimeout(r, 200));
+                window.scrollTo(0, 0);
+                if (document.fonts && document.fonts.ready) await document.fonts.ready;
+                await new Promise(r => setTimeout(r, 250));
+
                 let captureWidthPx = targetWidthPx;
-                const renderHeight = cloneEl.scrollHeight, maxOnePageHeightPx = Math.floor(targetWidthPx * ((pdfConfig.orientation === 'landscape' ? 210 : 297) - pdfConfig.margin[0] - pdfConfig.margin[2]) / ((pdfConfig.orientation === 'landscape' ? 297 : 210) - pdfConfig.margin[1] - pdfConfig.margin[3]));
-                if (renderHeight > maxOnePageHeightPx) { captureWidthPx = Math.ceil(renderHeight * ((pdfConfig.orientation === 'landscape' ? 297 : 210) / (pdfConfig.orientation === 'landscape' ? 210 : 297))) + 8; tempWrapper.style.width = captureWidthPx + 'px'; cloneEl.style.margin = '0 auto'; }
-                
+                const renderHeight = cloneEl.scrollHeight || cloneEl.offsetHeight;
+                const pageW = pdfConfig.orientation === 'landscape' ? 297 : 210;
+                const pageH = pdfConfig.orientation === 'landscape' ? 210 : 297;
+                const innerW = pageW - (pdfConfig.margin[1] || 0) - (pdfConfig.margin[3] || 0);
+                const innerH = pageH - (pdfConfig.margin[0] || 0) - (pdfConfig.margin[2] || 0);
+                const maxOnePageHeightPx = Math.floor(targetWidthPx * (innerH / innerW));
+
+                if (renderHeight > maxOnePageHeightPx) {
+                    captureWidthPx = Math.ceil(renderHeight * (innerW / innerH)) + 8;
+                    tempWrapper.style.width = captureWidthPx + 'px';
+                    cloneEl.style.margin = '0 auto';
+                }
+
+                const captureHeightPx = Math.max(cloneEl.scrollHeight, cloneEl.offsetHeight, 100);
+
                 await html2pdf().set({
-                    margin: pdfConfig.margin, filename: pdfConfig.filename, image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', width: captureWidthPx, windowWidth: captureWidthPx, scrollX: 0, scrollY: 0 },
+                    margin: pdfConfig.margin,
+                    filename: pdfConfig.filename,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        logging: false,
+                        backgroundColor: '#ffffff',
+                        width: captureWidthPx,
+                        height: captureHeightPx,
+                        windowWidth: captureWidthPx,
+                        windowHeight: captureHeightPx,
+                        x: 0,
+                        y: 0,
+                        scrollX: 0,
+                        scrollY: 0,
+                        onclone: function(clonedDoc) {
+                            // ซ่อนแผ่นบังและส่วนอื่นของหน้าเว็บใน cloned document เพื่อให้เห็นเฉพาะ tempWrapper 100%
+                            const curtain = clonedDoc.querySelector('[data-pdf-curtain="1"]');
+                            if (curtain) curtain.style.display = 'none';
+                            const appEl = clonedDoc.getElementById('appContent');
+                            if (appEl) appEl.style.display = 'none';
+                            const navEl = clonedDoc.getElementById('bottomNav');
+                            if (navEl) navEl.style.display = 'none';
+                            const capRoot = clonedDoc.querySelector('[data-pdf-capture-root="1"]');
+                            if (capRoot) {
+                                capRoot.style.position = 'static';
+                                capRoot.style.zIndex = '1';
+                                capRoot.style.margin = '0';
+                            }
+                        }
+                    },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: pdfConfig.orientation }
                 }).from(tempWrapper).save();
-            } catch(e) { window.showCustomModal("เกิดข้อผิดพลาดในการสร้าง PDF"); }
-            finally { if(tempWrapper.parentNode) tempWrapper.remove(); if(overlayCurtain.parentNode) overlayCurtain.remove(); window.scrollTo(0, savedScrollY); if(btnEl) { btnEl.innerHTML = defaultBtnHtml; btnEl.disabled = false; } }
+            } catch (e) {
+                console.error("PDF Export Error:", e);
+                window.showCustomModal("เกิดข้อผิดพลาดในการสร้าง PDF");
+            } finally {
+                if (tempWrapper.parentNode) tempWrapper.remove();
+                if (overlayCurtain.parentNode) overlayCurtain.remove();
+                window.scrollTo(0, savedScrollY);
+                if (btnEl) { btnEl.innerHTML = defaultBtnHtml; btnEl.disabled = false; }
+            }
         }
 
         window.generatePDF = async function() {
