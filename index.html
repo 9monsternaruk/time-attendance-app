@@ -1476,9 +1476,9 @@
                 const val = `${y}-${String(m).padStart(2, '0')}`;
                 
                 const thaiY = (y + 543) % 100; 
-                const thaiPrevY = (prevY + 543) % 100;
                 
-                const newLabel = `เดือน${THAI_MONTHS_FULL[m]} (16 ${THAI_MONTHS_SHORT[prevM]} - 15 ${THAI_MONTHS_SHORT[m]} ${thaiY})`;
+                // แก้ไขดึงชื่อเดือนเต็มจากเดือนต้นทาง (prevM) แทนเดือนปลายทาง (m)
+                const newLabel = `เดือน${THAI_MONTHS_FULL[prevM]} (16 ${THAI_MONTHS_SHORT[prevM]} - 15 ${THAI_MONTHS_SHORT[m]} ${thaiY})`;
                 
                 cycles.push({
                     index: i, value: val,
@@ -1696,6 +1696,12 @@
             
             const empName = isUserAdmin && currentUserRole === 'admin' ? 'Super Admin (HR)' : (window.allEmployees[currentUserRole] || currentUserRole);
             document.getElementById('headerUserName').textContent = empName;
+            
+            // เพิ่มการอัปเดตชื่อสำหรับหน้าต่าง Employee View (หน้าลงเวลาหลัก)
+            const liveEmpNameEl = document.getElementById('liveEmpName');
+            if(liveEmpNameEl) {
+                liveEmpNameEl.textContent = empName;
+            }
             
             if (currentUserRole !== 'admin') {
                 document.getElementById('headerUserId').textContent = currentUserRole;
