@@ -1740,28 +1740,47 @@
             }
         };
         
-        // 💡 Requirement 2: เช็คสถานะการเข้างานของวันนี้ แล้วปรับ Disable/Enable ปุ่ม "เข้างาน"
+        // 💡 Requirement 2 & กะดึก: เช็คสถานะการเข้างานของวันนี้ และเมื่อวาน
         window.updateClockButtonsState = function() {
             if(!currentUserRole || isCurrentUserAdmin()) return; // ข้ามถ้าเป็น Admin/HR
             
             const now = new Date();
             const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             
-            // ค้นหา record ของวันนี้ สำหรับ User นี้
-            const todayRecord = window.allRecords.find(r => r.empId === currentUserRole && r.date === todayISO);
+            // หาเมื่อวาน
+            let yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            let yesterdayISO = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
             
+            const todayRecord = window.allRecords.find(r => r.empId === currentUserRole && r.date === todayISO);
+            const yesterdayRecord = window.allRecords.find(r => r.empId === currentUserRole && r.date === yesterdayISO);
+            
+            // เช็คว่ามีกะของเมื่อวานที่ "เข้า" แล้วแต่ยังไม่ "ออก" ไหม? (Pending Shift)
+            let isPendingYesterdayShift = false;
+            if (yesterdayRecord && yesterdayRecord.in && yesterdayRecord.in !== '-' && (!yesterdayRecord.out || yesterdayRecord.out === '-')) {
+                isPendingYesterdayShift = true;
+            }
+
             const btnIn = document.getElementById('btnClockIn');
             const txtIn = document.getElementById('txtClockIn');
             
             if(btnIn && txtIn) {
-                if (todayRecord && todayRecord.in && todayRecord.in !== '-') {
-                    // เข้างานแล้ว
+                if (isPendingYesterdayShift) {
+                    // กรณี 1: ทำกะดึกค้างอยู่ข้ามคืน (เมื่อวานยังไม่ได้ออกงาน)
                     btnIn.disabled = true;
                     btnIn.classList.add('opacity-40', 'cursor-not-allowed');
                     btnIn.classList.remove('hover:bg-teal-100', 'hover:border-teal-300');
                     txtIn.textContent = 'เข้างานแล้ว';
-                } else {
-                    // ยังไม่ได้เข้างาน หรือเป็นวันใหม่
+                } 
+                else if (todayRecord && todayRecord.in && todayRecord.in !== '-') {
+                    // กรณี 2: วันนี้เข้างานไปแล้ว (กะปกติ)
+                    btnIn.disabled = true;
+                    btnIn.classList.add('opacity-40', 'cursor-not-allowed');
+                    btnIn.classList.remove('hover:bg-teal-100', 'hover:border-teal-300');
+                    txtIn.textContent = 'เข้างานแล้ว';
+                } 
+                else {
+                    // กรณี 3: ยังไม่ได้เข้างานเลย หรือเพิ่งกดออกงานของเมื่อวานเสร็จ
                     btnIn.disabled = false;
                     btnIn.classList.remove('opacity-40', 'cursor-not-allowed');
                     btnIn.classList.add('hover:bg-teal-100', 'hover:border-teal-300');
@@ -1914,11 +1933,15 @@
                 const base64Image = await compressImage(file, 0.55, watermarkText);
                 
                 let targetDateISO = todayISO; 
+                // 💡 กะดึก: ถ้ากดออกงาน ข้ามเที่ยงคืน ให้เช็คและดึงกลับไปบันทึกลงของเมื่อวาน
                 if (pendingRealtimeType === 'out') {
                     let yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
                     let yesterdayISO = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
                     let yesterdayRecord = window.allRecords.find(r => r.empId === currentUserRole && r.date === yesterdayISO && r.in && r.in !== '-' && (!r.out || r.out === '-'));
-                    if (yesterdayRecord) targetDateISO = yesterdayISO;
+                    
+                    if (yesterdayRecord) {
+                        targetDateISO = yesterdayISO;
+                    }
                 }
                 
                 let existingRecord = window.allRecords.find(r => r.empId === currentUserRole && r.date === targetDateISO) || {};
@@ -2071,11 +2094,20 @@
         }
 
         function getThaiDay(dateStr) { const days = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.']; return days[new Date(dateStr).getDay()]; }
+        
+        // 💡 กะดึกข้ามคืน: Logic นับชั่วโมงข้ามวัน และ max 12 ชม. อยู่ตรงนี้ครับ
         function calculateHours(timeIn, timeOut) {
             if (!timeIn || !timeOut || timeIn === '-' || timeOut === '-') return 0;
             let [inH, inM] = timeIn.split(':').map(Number); let [outH, outM] = timeOut.split(':').map(Number);
-            let dIn = new Date(2000, 0, 1, inH, inM); let dOut = new Date(2000, 0, (outH < inH || (outH === inH && outM < inM) ? 2 : 1), outH, outM);
-            let diffHrs = (dOut - dIn) / (1000 * 60 * 60); return diffHrs < 0 ? 0 : (diffHrs > 12 ? 12 : diffHrs);
+            
+            // ถ้าชั่วโมงออก < ชั่วโมงเข้า (เช่น ออก 07 < เข้า 18) ให้ถือว่าเป็นวันถัดไป (Date 2)
+            let dIn = new Date(2000, 0, 1, inH, inM); 
+            let dOut = new Date(2000, 0, (outH < inH || (outH === inH && outM < inM) ? 2 : 1), outH, outM);
+            
+            let diffHrs = (dOut - dIn) / (1000 * 60 * 60); 
+            
+            // บังคับไม่ให้ติดลบ และไม่เกิน 12 ชั่วโมง ตามกฎ รปภ.
+            return diffHrs < 0 ? 0 : (diffHrs > 12 ? 12 : diffHrs);
         }
 
         function getAttendanceStatsForCycle(empId, cycleVal) {
