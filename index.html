@@ -256,6 +256,12 @@
                 <button type="submit" id="btnLogin" class="btn-minimal w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-4 px-4 rounded-2xl transition-colors shadow-lg shadow-indigo-200 mt-4 text-lg">
                     เข้าสู่ระบบ
                 </button>
+                
+                <!-- 💡 Requirement 1: เพิ่มข้อความช่วยเหลือกรณีใช้งานครั้งแรกหรือลืมรหัสผ่าน -->
+                <div class="mt-5 text-center">
+                    <p class="text-[13.5px] text-slate-500">เข้าใช้งานครั้งแรก หรือลืมรหัสผ่าน?</p>
+                    <p class="text-[13.5px] text-indigo-600 font-medium mt-0.5">กรุณาติดต่อแอดมิน (HR)</p>
+                </div>
             </form>
         </div>
     </div>
@@ -370,14 +376,15 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
-                        <button id="btnClockIn" onclick="initiateRealtimeClock('in')" class="btn-minimal group flex flex-col items-center justify-center gap-3 bg-teal-50/50 border border-teal-200 hover:bg-teal-100 hover:border-teal-300 text-teal-800 py-8 rounded-3xl">
+                        <!-- 💡 Requirement 2: เพิ่ม class disabled เพื่อรอรับสถานะตอนที่พนักงานเข้างานแล้ว -->
+                        <button id="btnClockIn" onclick="initiateRealtimeClock('in')" class="btn-minimal group flex flex-col items-center justify-center gap-3 bg-teal-50/50 border border-teal-200 hover:bg-teal-100 hover:border-teal-300 text-teal-800 py-8 rounded-3xl transition-all">
                             <div class="bg-white p-3 rounded-2xl shadow-sm text-teal-600 group-hover:scale-110 transition-transform">
                                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
                             </div>
-                            <span class="font-semibold text-lg">เข้างาน</span>
+                            <span class="font-semibold text-lg" id="txtClockIn">เข้างาน</span>
                         </button>
 
-                        <button id="btnClockOut" onclick="initiateRealtimeClock('out')" class="btn-minimal group flex flex-col items-center justify-center gap-3 bg-rose-50/50 border border-rose-200 hover:bg-rose-100 hover:border-rose-300 text-rose-800 py-8 rounded-3xl">
+                        <button id="btnClockOut" onclick="initiateRealtimeClock('out')" class="btn-minimal group flex flex-col items-center justify-center gap-3 bg-rose-50/50 border border-rose-200 hover:bg-rose-100 hover:border-rose-300 text-rose-800 py-8 rounded-3xl transition-all">
                             <div class="bg-white p-3 rounded-2xl shadow-sm text-rose-600 group-hover:scale-110 transition-transform">
                                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                             </div>
@@ -992,6 +999,7 @@
             <span class="text-[10px] sm:text-xs font-medium">รายงาน</span>
         </button>
 
+        <!-- 💡 Requirement 3: ปุ่ม Slip รอรับสถานะซ่อนผ่าน JavaScript -->
         <button onclick="switchTab('slip')" id="navSlip" class="flex flex-col items-center justify-center p-2 text-slate-400 hover:text-indigo-600 w-full transition-colors rounded-2xl">
             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
             <span class="text-[10px] sm:text-xs font-medium">Slip</span>
@@ -1186,6 +1194,11 @@
                     if (typeof window.populateAdminFieldsFromLoaded === 'function') {
                         window.populateAdminFieldsFromLoaded();
                     }
+                }
+
+                // 💡 Requirement 2: เช็คสถานะปุ่มเข้างานทุกครั้งที่ข้อมูลเปลี่ยน
+                if (typeof window.updateClockButtonsState === 'function') {
+                    window.updateClockButtonsState();
                 }
             });
         };
@@ -1726,6 +1739,36 @@
                 document.getElementById('headerUserId').classList.remove('hidden');
             }
         };
+        
+        // 💡 Requirement 2: เช็คสถานะการเข้างานของวันนี้ แล้วปรับ Disable/Enable ปุ่ม "เข้างาน"
+        window.updateClockButtonsState = function() {
+            if(!currentUserRole || isCurrentUserAdmin()) return; // ข้ามถ้าเป็น Admin/HR
+            
+            const now = new Date();
+            const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            
+            // ค้นหา record ของวันนี้ สำหรับ User นี้
+            const todayRecord = window.allRecords.find(r => r.empId === currentUserRole && r.date === todayISO);
+            
+            const btnIn = document.getElementById('btnClockIn');
+            const txtIn = document.getElementById('txtClockIn');
+            
+            if(btnIn && txtIn) {
+                if (todayRecord && todayRecord.in && todayRecord.in !== '-') {
+                    // เข้างานแล้ว
+                    btnIn.disabled = true;
+                    btnIn.classList.add('opacity-40', 'cursor-not-allowed');
+                    btnIn.classList.remove('hover:bg-teal-100', 'hover:border-teal-300');
+                    txtIn.textContent = 'เข้างานแล้ว';
+                } else {
+                    // ยังไม่ได้เข้างาน หรือเป็นวันใหม่
+                    btnIn.disabled = false;
+                    btnIn.classList.remove('opacity-40', 'cursor-not-allowed');
+                    btnIn.classList.add('hover:bg-teal-100', 'hover:border-teal-300');
+                    txtIn.textContent = 'เข้างาน';
+                }
+            }
+        };
 
         function setupRoleView() {
             window.updateHeaderName();
@@ -1735,6 +1778,9 @@
                 document.getElementById('adminEntryView').classList.remove('hidden'); 
                 document.getElementById('employeeEntryView').classList.add('hidden');
                 document.getElementById('navEmp').classList.replace('hidden', 'flex');
+                
+                // 💡 Requirement 3: Admin ให้เห็นปุ่ม Slip
+                document.getElementById('navSlip').classList.remove('hidden');
                 
                 ['employeeSelect', 'slipEmployeeSelect'].forEach(id => {
                     const el = document.getElementById(id); el.classList.remove('hidden'); el.disabled = false;
@@ -1748,6 +1794,9 @@
                 document.getElementById('employeeEntryView').classList.remove('hidden');
                 document.getElementById('navEmp').classList.replace('flex', 'hidden');
                 
+                // 💡 Requirement 3: Employee ให้ซ่อนปุ่ม Slip
+                document.getElementById('navSlip').classList.add('hidden');
+                
                 ['employeeSelect', 'slipEmployeeSelect'].forEach(id => {
                     const el = document.getElementById(id);
                     el.classList.add('hidden'); el.innerHTML = `<option value="${currentUserRole}">${currentUserRole}</option>`; el.value = currentUserRole;
@@ -1755,6 +1804,7 @@
                 ['btnAdminEditSlip', 'btnAdminResetSlip'].forEach(id => document.getElementById(id).classList.add('hidden'));
                 
                 startClock(); startGPS();
+                window.updateClockButtonsState(); // 💡 Requirement 2: เช็คสถานะปุ่มตอนล็อกอินเข้าแอป
                 switchTab('entry');
             }
         }
